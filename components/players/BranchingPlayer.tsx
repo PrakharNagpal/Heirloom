@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import HerVoice from "./HerVoice";
-import type { BranchingPayload } from "@/lib/types";
+import { t } from "@/lib/ui-strings";
+import type { BranchingPayload, Lang } from "@/lib/types";
 
 /**
  * You play as her, at the age she was, and reach the choice she actually faced.
@@ -13,14 +14,17 @@ import type { BranchingPayload } from "@/lib/types";
 export default function BranchingPlayer({
   payload,
   speaker,
+  lang,
   activeIndex,
   onPlay,
 }: {
   payload: BranchingPayload;
   speaker: string;
+  lang: Lang;
   activeIndex: number | null;
   onPlay: (segmentIndex: number) => void;
 }) {
+  const c = t(lang);
   const [path, setPath] = useState<string[]>([payload.nodes[0]?.id ?? ""]);
   const currentId = path[path.length - 1];
   const node = payload.nodes.find((n) => n.id === currentId) ?? payload.nodes[0];
@@ -36,7 +40,7 @@ export default function BranchingPlayer({
     <div>
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-[1.8rem] leading-tight">
-          You are {speaker}.
+          {c.youAre} {speaker}.
         </h1>
         <p className="mt-3 text-rice/65">{payload.premise}</p>
       </header>
@@ -46,11 +50,10 @@ export default function BranchingPlayer({
         <div className="mt-5">
           <HerVoice
             speaker={speaker}
+            lang={lang}
             playing={activeIndex === node.segmentIndex}
             onPlay={() => onPlay(node.segmentIndex)}
-            label={
-              activeIndex === node.segmentIndex ? "Listen" : `Hear where this came from`
-            }
+            label={c.whereThisCameFrom}
           />
         </div>
       </section>
@@ -58,9 +61,9 @@ export default function BranchingPlayer({
       {!ended ? (
         <div className="mt-7">
           <p className="font-mono text-[11px] tracking-[0.18em] text-rice/40 uppercase">
-            What do you do?
+            {c.whatDoYouDo}
           </p>
-          <div role="group" aria-label="Your choices" className="mt-3 grid gap-3">
+          <div role="group" aria-label={c.yourChoices} className="mt-3 grid gap-3">
             {choices.map((c, i) => (
               <button
                 key={i}
@@ -79,15 +82,13 @@ export default function BranchingPlayer({
               isTrueEnding ? "bg-pandan/20 text-rice" : "bg-jade/12 text-rice/75"
             }`}
           >
-            {isTrueEnding
-              ? `That is what ${speaker} actually did.`
-              : `That is not the way it went. ${speaker} chose differently.`}
+            {isTrueEnding ? c.actuallyDid : c.choseDifferently}
           </p>
           <button
             onClick={() => setPath([payload.nodes[0].id])}
             className="mt-4 min-h-12 w-full rounded-full bg-kueh px-5 font-medium text-lacquer"
           >
-            Go back to the start
+            {c.startOver}
           </button>
         </div>
       )}
@@ -97,7 +98,7 @@ export default function BranchingPlayer({
           onClick={() => setPath((p) => p.slice(0, -1))}
           className="mt-6 min-h-12 text-sm text-rice/45 underline underline-offset-4"
         >
-          Undo that choice
+          {c.undoChoice}
         </button>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -9,12 +9,13 @@ import AskHer from "@/components/players/AskHer";
 import BranchingPlayer from "@/components/players/BranchingPlayer";
 import CookalongPlayer from "@/components/players/CookalongPlayer";
 import PhraseCoachPlayer from "@/components/players/PhraseCoachPlayer";
-import { getLesson, getMemory, readLang, saveLesson, type StoredMemory } from "@/lib/store";
+import StorybookPlayer from "@/components/players/StorybookPlayer";
+import { getLesson, getMemory, saveLesson, type StoredMemory } from "@/lib/store";
 import { useSegmentAudio } from "@/lib/use-segment-audio";
+import { FORMAT_NAMES, t } from "@/lib/ui-strings";
+import { useLang } from "@/lib/use-lang";
 import {
   availableLanguages,
-  FORMAT_LABELS,
-  LANGUAGES,
   LANGUAGE_LABELS,
   SHIPPED_FORMATS,
   type BranchingPayload,
@@ -23,6 +24,7 @@ import {
   type Lesson,
   type LessonFormat,
   type PhraseCoachPayload,
+  type StorybookPayload,
 } from "@/lib/types";
 
 export default function LessonPage() {
@@ -31,30 +33,35 @@ export default function LessonPage() {
   const format = (params.get("format") ?? "cookalong") as LessonFormat;
 
   const [entry, setEntry] = useState<StoredMemory | null | undefined>(undefined);
-  const [lang, setLang] = useState<Lang>("en");
-  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [lang, setLang] = useLang();
+  // Lessons already written are derived, not stored in state: a cached one renders
+  // on the first pass with no loading flash, and nothing has to be copied into
+  // state when the language changes.
+  const [written, setWritten] = useState<Record<string, Lesson>>({});
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { activeIndex, currentSec, failed, playSegment, seek } = useSegmentAudio(entry ?? null);
 
-  useEffect(() => {
-    setEntry(getMemory(id));
-    const saved = readLang();
-    if (saved && (LANGUAGES as readonly string[]).includes(saved)) setLang(saved as Lang);
-  }, [id]);
+  // Reading client-only storage after mount: there is no localStorage during SSR,
+  // so this cannot be an initial state value.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setEntry(getMemory(id)), [id]);
+
+  const key = `${format}::${lang}`;
+  const lesson = useMemo(
+    () => (entry ? (written[key] ?? getLesson(entry.memory.id, format, lang)) : null),
+    [entry, written, key, format, lang]
+  );
 
   /**
    * A lesson is written once per memory + format + language and kept. Switching to a
    * language it hasn't been written in costs one call, once; every visit after that
    * is instant.
    */
-  const load = useCallback(
+  const write = useCallback(
     async (target: Lang) => {
       if (!entry) return;
-      const cached = getLesson(entry.memory.id, format, target);
-      if (cached) return setLesson(cached);
-
       setBuilding(true);
       setError(null);
       try {
@@ -66,7 +73,7 @@ export default function LessonPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? "That didn't come through.");
         saveLesson(data.lesson);
-        setLesson(data.lesson);
+        setWritten((w) => ({ ...w, [`${format}::${target}`]: data.lesson as Lesson }));
       } catch (e) {
         setError(e instanceof Error ? e.message : "That didn't come through.");
       } finally {
@@ -77,23 +84,28 @@ export default function LessonPage() {
   );
 
   useEffect(() => {
-    if (entry) void load(lang);
-  }, [entry, lang, load]);
+    // Kicking off a fetch is what an effect is for. write() flips the loading flag on
+    // its way to the network, which the rule counts as a synchronous setState; there
+    // is no data layer here to hand it to instead.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (entry && !lesson && !building && !error) void write(lang);
+  }, [entry, lesson, building, error, lang, write]);
 
   if (entry === undefined) return <Shell>{null}</Shell>;
 
   if (entry === null || !SHIPPED_FORMATS.includes(format))
     return (
       <Shell>
-        <BackLink href="/">Back to the start</BackLink>
+        <BackLink href="/">{t(lang).backToStart}</BackLink>
         <h1 className="mt-8 font-[family-name:var(--font-display)] text-3xl">
-          {entry === null ? "That memory is gone." : "We don't make that one yet."}
+          {entry === null ? t(lang).gone : t(lang).notYet}
         </h1>
       </Shell>
     );
 
   const { memory, peaks } = entry;
   const speaker = memory.speakerName;
+  const c = t(lang);
   const openQuestions =
     ((lesson?.payload as { openQuestions?: string[] } | undefined)?.openQuestions ?? []).filter(
       Boolean
@@ -101,9 +113,9 @@ export default function LessonPage() {
 
   return (
     <Shell>
-      <BackLink href={`/memory/${memory.id}`}>Back to her words</BackLink>
+      <BackLink href={`/memory/${memory.id}`}>{c.backToHerWords}</BackLink>
       <p className="font-mono text-[10px] tracking-[0.16em] text-jade uppercase">
-        {FORMAT_LABELS[format]}
+        {FORMAT_NAMES[lang][format]}
       </p>
 
       {/* The spine stays pinned: her voice is the thread through the whole lesson. */}
@@ -131,7 +143,7 @@ export default function LessonPage() {
 
       {failed && (
         <p className="mt-4 rounded-xl bg-kueh/15 px-4 py-3 text-sm text-rice/80">
-          Her recording won&rsquo;t play on this browser. The lesson still works.
+          {c.wontPlay}
         </p>
       )}
 
@@ -139,7 +151,7 @@ export default function LessonPage() {
           blanking it, so say plainly what is happening. */}
       {building && lesson && (
         <p className="mt-4 rounded-xl bg-jade/20 px-4 py-3 text-sm text-rice/80">
-          Writing this in {LANGUAGE_LABELS[lang]}. Once only &mdash; then it&rsquo;s yours.
+          {c.writingThisIn} {LANGUAGE_LABELS[lang]}. {c.onceOnly}
         </p>
       )}
 
@@ -147,19 +159,17 @@ export default function LessonPage() {
         {building && !lesson ? (
           <div className="flex flex-col items-center gap-4 py-20 text-center">
             <div className="h-10 w-10 animate-spin rounded-full border-3 border-jade/30 border-t-kueh" />
-            <p className="text-rice">Making this from what she said.</p>
-            <p className="text-sm text-rice/50">
-              Written once in {LANGUAGE_LABELS[lang]}, then it&rsquo;s yours.
-            </p>
+            <p className="text-rice">{c.makingThis}</p>
+            <p className="text-sm text-rice/50">{c.writtenOnce}</p>
           </div>
         ) : error && !lesson ? (
           <div className="py-16">
             <p className="text-rice">{error}</p>
             <button
-              onClick={() => void load(lang)}
+              onClick={() => void write(lang)}
               className="mt-5 min-h-12 rounded-full bg-kueh px-6 font-medium text-lacquer"
             >
-              Try again
+              {c.tryAgain}
             </button>
           </div>
         ) : lesson ? (
@@ -169,6 +179,7 @@ export default function LessonPage() {
             {format === "cookalong" && (
               <CookalongPlayer
                 key={lesson.id}
+                lang={lang}
                 payload={lesson.payload as CookalongPayload}
                 speaker={speaker}
                 activeIndex={activeIndex}
@@ -178,7 +189,19 @@ export default function LessonPage() {
             {format === "phrasecoach" && (
               <PhraseCoachPlayer
                 key={lesson.id}
+                lang={lang}
                 payload={lesson.payload as PhraseCoachPayload}
+                speaker={speaker}
+                activeIndex={activeIndex}
+                onPlay={playSegment}
+              />
+            )}
+            {format === "storybook" && (
+              <StorybookPlayer
+                key={lesson.id}
+                lang={lang}
+                payload={lesson.payload as StorybookPayload}
+                memoryId={memory.id}
                 speaker={speaker}
                 activeIndex={activeIndex}
                 onPlay={playSegment}
@@ -187,6 +210,7 @@ export default function LessonPage() {
             {format === "branching" && (
               <BranchingPlayer
                 key={lesson.id}
+                lang={lang}
                 payload={lesson.payload as BranchingPayload}
                 speaker={speaker}
                 activeIndex={activeIndex}
@@ -197,14 +221,12 @@ export default function LessonPage() {
             {openQuestions.length > 0 && (
               <section className="mt-14 border-t border-jade/20 pt-7">
                 <h2 className="font-[family-name:var(--font-display)] text-xl">
-                  Things only she can tell you.
+                  {c.onlyShe}
                 </h2>
-                <p className="mt-2 text-sm text-rice/50">
-                  We left these out rather than guess at them.
-                </p>
+                <p className="mt-2 text-sm text-rice/50">{c.weLeftThese}</p>
                 <div className="mt-4">
                   {openQuestions.map((q, i) => (
-                    <AskHer key={i} question={q} />
+                    <AskHer key={i} question={q} lang={lang} />
                   ))}
                 </div>
               </section>

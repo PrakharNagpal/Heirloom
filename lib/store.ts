@@ -1,7 +1,7 @@
 "use client";
 
 import type { Lang, Lesson, LessonFormat, Memory } from "./types";
-import { SEED_MEMORY } from "./seed";
+import { SEED_LESSONS, SEED_MEMORY } from "./seed";
 
 /**
  * Two stores, deliberately.
@@ -177,7 +177,16 @@ export function getLesson(
   format: LessonFormat,
   language: Lang
 ): Lesson | null {
-  return readLessons()[lessonKey(memoryId, format, language)] ?? null;
+  const key = lessonKey(memoryId, format, language);
+  const stored = readLessons()[key];
+  if (stored) return stored;
+  // The seeded memory's lessons ship in the bundle, so the demo never waits on a
+  // request and never needs the network at all.
+  return (
+    SEED_LESSONS.find(
+      (l) => l.memoryId === memoryId && l.format === format && l.language === language
+    ) ?? null
+  );
 }
 
 export function saveLesson(lesson: Lesson) {

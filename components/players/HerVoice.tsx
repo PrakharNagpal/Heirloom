@@ -1,5 +1,8 @@
 "use client";
 
+import { t } from "@/lib/ui-strings";
+import type { Lang } from "@/lib/types";
+
 /**
  * The button that carries the whole product claim: this line came from something
  * she said, and here she is saying it. Every element of every lesson gets one.
@@ -8,13 +11,16 @@ export default function HerVoice({
   speaker,
   playing,
   onPlay,
+  lang = "en",
   label,
 }: {
   speaker: string;
   playing: boolean;
   onPlay: () => void;
+  lang?: Lang;
   label?: string;
 }) {
+  const c = t(lang);
   return (
     <button
       onClick={onPlay}
@@ -26,7 +32,7 @@ export default function HerVoice({
       <span aria-hidden className="text-base leading-none">
         {playing ? "❚❚" : "▶"}
       </span>
-      {label ?? (playing ? `${speaker} is speaking` : `Hear ${speaker} say this`)}
+      {playing ? c.sheIsSpeaking : (label ?? c.hearHerSayThis)}
     </button>
   );
 }

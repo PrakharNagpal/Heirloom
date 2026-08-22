@@ -151,9 +151,10 @@ async function main() {
 
   // language switch mid-lesson
   await switchLanguage(page, "中文");
+  // The chrome is translated too, so "Step 1 of 5" is now "第 1 步，共 5".
   check(
-    await page.getByText(/Step 1 of/).isVisible(),
-    "cookalong: survives switching language mid-lesson"
+    await page.getByText(/第 1 步/).isVisible(),
+    "cookalong: survives switching language mid-lesson, chrome and all"
   );
   const zhText = await page.locator("main").innerText();
   check(/[一-鿿]/.test(zhText), "cookalong: the lesson itself is rewritten in 中文");

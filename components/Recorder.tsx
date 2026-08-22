@@ -2,16 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import { blobToBase64, measureAudio, pickRecorderMime } from "@/lib/audio";
-import { readLang, saveMemory } from "@/lib/store";
-import { LANGUAGES, SOURCE_LANGUAGES, type Lang, type Memory } from "@/lib/types";
+import KeptMoment from "@/components/KeptMoment";
+import { saveMemory } from "@/lib/store";
+import { t } from "@/lib/ui-strings";
+import { SOURCE_LANGUAGES, type Lang, type Memory } from "@/lib/types";
 
-type Stage = "idle" | "recording" | "thinking" | "error";
+type Stage = "idle" | "recording" | "thinking" | "kept" | "error";
 
 /** Long enough to be a memory, short enough to stay inside the inline request limit. */
 const MAX_SECONDS = 110;
 
-export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => void }) {
+export default function Recorder({
+  lang,
+  onSaved,
+}: {
+  lang: Lang;
+  onSaved: (memory: Memory) => void;
+}) {
+  const c = t(lang);
   const [stage, setStage] = useState<Stage>("idle");
+  const [kept, setKept] = useState<Memory | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [level, setLevel] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -73,14 +83,12 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
       setStage("recording");
     } catch {
       setStage("error");
-      setError(
-        "We can't reach the microphone. Allow it in your browser, or upload a recording instead."
-      );
+      setError(c.micRefused);
     }
   }
 
   function stop() {
-    recorder.current?.state === "recording" && recorder.current.stop();
+    if (recorder.current?.state === "recording") recorder.current.stop();
   }
 
   useEffect(() => {
@@ -103,10 +111,7 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
       const facts = await measureAudio(blob);
       // Translate into the language this phone is already reading, and only that
       // one. The others are filled in by /api/translate if anybody switches.
-      const saved = readLang();
-      const targetLanguage: Lang = (LANGUAGES as readonly string[]).includes(saved ?? "")
-        ? (saved as Lang)
-        : "en";
+      const targetLanguage: Lang = lang;
       const res = await fetch("/api/understand", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -124,10 +129,11 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
 
       const memory = data.memory as Memory;
       await saveMemory({ memory, peaks: facts.peaks }, blob);
-      onSaved(memory);
+      setKept(memory);
+      setStage("kept");
     } catch (e) {
       setStage("error");
-      setError(e instanceof Error ? e.message : "That didn't work. Try once more.");
+      setError(e instanceof Error ? e.message : c.tryAgain);
     }
   }
 
@@ -136,14 +142,15 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
     if (file) await understand(file);
   }
 
+  if (stage === "kept" && kept)
+    return <KeptMoment memory={kept} lang={lang} onContinue={() => onSaved(kept)} />;
+
   if (stage === "thinking")
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <div className="h-12 w-12 animate-spin rounded-full border-3 border-jade/30 border-t-kueh" />
-        <p className="text-rice">Listening to her.</p>
-        <p className="text-sm text-rice/55">
-          Working out what she said, and what it means. About half a minute.
-        </p>
+        <p className="text-rice">{c.thinking}</p>
+        <p className="text-sm text-rice/55">{c.thinkingSub}</p>
       </div>
     );
 
@@ -160,13 +167,13 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
               className="absolute inset-0 rounded-full bg-kueh/40"
               style={{ transform: `scale(${1 + level * 0.35})`, transition: "transform 80ms" }}
             />
-            <span className="relative">Done</span>
+            <span className="relative">{c.done}</span>
           </button>
           <p className="font-mono text-sm text-rice/60">
-            {String(Math.floor(seconds / 60))}:{String(seconds % 60).padStart(2, "0")} · listening
+            {String(Math.floor(seconds / 60))}:{String(seconds % 60).padStart(2, "0")} · {c.listening}
           </p>
           <p className="text-center text-sm text-rice/50">
-            Let her finish. Tap Done when she&rsquo;s said everything.
+            {c.letHerFinish}
           </p>
         </>
       ) : (
@@ -175,9 +182,11 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
             onClick={start}
             className="flex h-40 w-40 items-center justify-center rounded-full bg-kueh text-center text-lg leading-tight font-medium text-lacquer"
           >
-            Start
-            <br />
-            listening
+            {c.startListening.split("\n").map((w, i) => (
+              <span key={i} className="block">
+                {w}
+              </span>
+            ))}
           </button>
           <p className="max-w-[18rem] text-center text-rice/60">
             Ask her one thing, then let her talk. Any language — hers is fine.
@@ -194,7 +203,7 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
           {showLanguages ? (
             <div className="w-full">
               <p className="mb-3 text-center text-sm text-rice/55">
-                What is she most likely to speak?
+                {c.whichLanguage}
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SOURCE_LANGUAGES.map((l) => (
@@ -215,7 +224,7 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
                 ))}
               </div>
               <p className="mt-3 text-center text-xs text-rice/40">
-                Only a hint. She can switch language mid-sentence and it still works.
+                {c.onlyAHint}
               </p>
             </div>
           ) : (
@@ -224,13 +233,13 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
               className="min-h-11 text-sm text-rice/55 underline underline-offset-4"
             >
               {sourceHint === "auto"
-                ? "She speaks a dialect? Tell us which"
-                : `Listening for ${SOURCE_LANGUAGES.find((l) => l.id === sourceHint)?.label}`}
+                ? c.dialectPrompt
+                : `${c.listening} · ${SOURCE_LANGUAGES.find((l) => l.id === sourceHint)?.label}`}
             </button>
           )}
 
           <label className="min-h-11 cursor-pointer pt-2 text-sm text-rice/55 underline underline-offset-4">
-            Or use a recording you already have
+            {c.useExisting}
             <input type="file" accept="audio/*,video/webm" onChange={onFile} className="hidden" />
           </label>
         </div>

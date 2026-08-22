@@ -53,6 +53,7 @@ function allIndices(payload: any): number[] {
 function elementCount(format: LessonFormat, payload: any): number {
   if (format === "cookalong") return payload.steps?.length ?? 0;
   if (format === "phrasecoach") return payload.phrases?.length ?? 0;
+  if (format === "storybook") return payload.panels?.length ?? 0;
   return payload.nodes?.length ?? 0;
 }
 
@@ -120,6 +121,15 @@ async function main() {
       );
       check(dangling.length === 0, `branching: no choice leads to a node that doesn't exist`);
       check(ids.has(payload.trueEndingId), `branching: trueEndingId "${payload.trueEndingId}" is a real node`);
+    }
+    if (format === "storybook") {
+      check(els === 6, `storybook: exactly six panels (${els})`);
+      const withText = payload.panels.filter((p: any) =>
+        /\b(text|letters?|writing|sign)\b/i.test(p.imagePrompt)
+      );
+      check(withText.length === 0, "storybook: no panel asks for writing inside the picture");
+      const longest = Math.max(...payload.panels.map((p: any) => p.caption.split(/\s+/).length));
+      check(longest <= 35, `storybook: captions short enough for a 7-year-old (longest ${longest} words)`);
     }
     if (format === "phrasecoach") {
       const off = payload.phrases.filter(

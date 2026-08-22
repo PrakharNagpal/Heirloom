@@ -163,7 +163,7 @@ function report(
 function writeSpotCheck(memory: Memory, audioFile: string) {
   const rows = memory.segments
     .map(
-      (s, i) => `<button data-s="${s.startSec}" data-e="${s.endSec}">
+      (s) => `<button data-s="${s.startSec}" data-e="${s.endSec}">
       <span class="t">${timecode(s.startSec)}–${timecode(s.endSec)}</span>
       <span class="o${s.uncertain ? " unsure" : ""}">${escapeHtml(s.originalText)}</span>
       <span class="tr">${escapeHtml(Object.values(s.translations)[0] ?? "")}</span>

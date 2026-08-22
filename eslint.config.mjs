@@ -6,6 +6,11 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
+  {
+    // The gate scripts walk payloads whose shape is whatever the model returned.
+    files: ["scripts/**/*.ts"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",

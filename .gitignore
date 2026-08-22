@@ -53,7 +53,6 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /blob-report/
-gate-*.png
 
 # logs
 npm-debug.log*
@@ -61,6 +60,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.log
+
+# images — screenshots, gate output, scratch renders. The app's own icons are the
+# exception: manifest.json and the layout reference them, so the deploy needs them.
+*.png
+!public/icon-192.png
+!public/icon-512.png
+!public/icon-maskable-512.png
+!public/apple-touch-icon.png
 
 # editors and OS
 .DS_Store

@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/lib/ui-strings";
 import type { Lang, Segment } from "@/lib/types";
 
 /**
@@ -20,11 +21,12 @@ export default function TranscriptSpine({
   failed?: boolean;
   onPlay: (i: number) => void;
 }) {
+  const c = t(lang);
   return (
     <div>
       {failed && (
         <p className="mb-4 rounded-xl bg-kueh/15 px-4 py-3 text-sm text-rice/80">
-          Her recording won&rsquo;t play on this browser. The words are all still here.
+          {c.wontPlay}
         </p>
       )}
 
@@ -45,14 +47,14 @@ export default function TranscriptSpine({
                     {timecode(seg.startSec)}
                   </span>
                   <span className={`text-[11px] ${active ? "text-kueh" : "text-rice/35"}`}>
-                    {active ? "playing" : "tap to hear her"}
+                    {active ? c.playing : c.tapToHear}
                   </span>
                 </span>
 
                 <span
                   className={`block text-rice ${
                     seg.uncertain
-                      ? "decoration-gold underline decoration-dotted decoration-2 underline-offset-4"
+                      ? "decoration-kueh underline decoration-dotted decoration-2 underline-offset-4"
                       : ""
                   }`}
                 >
@@ -64,9 +66,7 @@ export default function TranscriptSpine({
                 </span>
 
                 {seg.uncertain && (
-                  <span className="mt-2 block text-xs text-gold/90">
-                    We&rsquo;re not certain of a word here. Tap to hear her say it.
-                  </span>
+                  <span className="mt-2 block text-xs text-kueh/90">{c.notCertain}</span>
                 )}
               </button>
             </li>

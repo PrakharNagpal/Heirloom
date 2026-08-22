@@ -103,6 +103,30 @@ but never says for how long, it produced:
 and no quantity, time or temperature anywhere in the lesson. That gap is the feature:
 the app's job is not to replace the conversation, it is to start one.
 
+## The picture book
+
+The fourth format turns the memory into six illustrated pages for a grandchild too
+young to read a transcript. Her real voice sits under every page.
+
+Two things decide whether it works:
+
+**One style, or it looks broken.** Six independent image calls produce six unrelated
+pictures. Every panel prompt gets the same fixed style string — medium, palette,
+setting, light — and the whole book is pinned to the model that drew its first page.
+That is not belt-and-braces: mixing two image models mid-book produced a 1960s
+Singapore kitchen on one page and a European one at a different aspect ratio on the
+next. Aspect ratio is forced square for the same reason.
+
+**Illustrated, never photographic.** We draw the memory; we do not manufacture a
+photograph of a real woman that her family might one day mistake for real. The app
+says so on the page: *"Drawn, not photographed. These are pictures of her story, not
+pictures of her."* That is an ethical line before it is an aesthetic one.
+
+The drawings do not depend on the reading language — the caption changes, the scene
+does not — so a panel is drawn once per memory and reused across all four. The seeded
+memory's six pages ship in `/public/storybook/`, which is why the book opens in a
+tenth of a second and works with the network off.
+
 ## Safety
 
 - **No invented memories.** Where a lesson needs a detail she didn't give, it renders
@@ -114,6 +138,41 @@ the app's job is not to replace the conversation, it is to start one.
   someone who may not be around to object.
 - Heirloom makes **no inference about cognitive state, mood, or health** from her
   speech, and the prompt forbids it explicitly.
+
+## It works with the network off
+
+The seeded memory, her audio, and all twelve of its lessons — three formats in four
+languages — ship inside the bundle. A service worker precaches the shell and the
+audio, so with the network disabled the app still reloads, renders the transcript,
+plays her voice, switches all four languages and opens every lesson. Nothing in the
+demo path calls the model at runtime.
+
+That is not polish. Venue wifi dies, and a demo that needs the network is a demo you
+might not get to give.
+
+```bash
+npm run build && npx next start -p 3100
+npm run gate:freeze      # loads it, pulls the plug, and checks all of the above
+```
+
+It installs to a home screen as a PWA — standalone, its own icon, lacquer splash.
+
+## Checking it
+
+Each phase has a gate that runs the app rather than reading it. They are the reason
+several real bugs got caught: an ending rendered as a dead button, a player that
+would have thrown on a shorter translation, a validator whose queue drained itself.
+
+```bash
+npm run gate:spine       # capture, transcript, tap-a-line, refresh survival
+npm run gate:generate    # segmentIndex in range, gap prompts, fallback payloads
+npm run gate:players     # plays every format start to finish at 390px
+npm run gate:design      # tokens, gold-leaf spent once, safety UI, no jargon
+npm run gate:storybook   # six panels, one style, swipe, her voice per page
+npm run gate:freeze      # the offline test, against a production build
+```
+
+`gate:generate` and `gate:players` call the model; the rest are free.
 
 ## Stack
 

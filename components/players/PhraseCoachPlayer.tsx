@@ -2,7 +2,8 @@
 
 import AskHer from "./AskHer";
 import HerVoice from "./HerVoice";
-import type { PhraseCoachPayload } from "@/lib/types";
+import { t } from "@/lib/ui-strings";
+import type { Lang, PhraseCoachPayload } from "@/lib/types";
 
 /**
  * Her dialect, with her as the pronunciation reference. No synthesised voice
@@ -11,24 +12,24 @@ import type { PhraseCoachPayload } from "@/lib/types";
 export default function PhraseCoachPlayer({
   payload,
   speaker,
+  lang,
   activeIndex,
   onPlay,
 }: {
   payload: PhraseCoachPayload;
   speaker: string;
+  lang: Lang;
   activeIndex: number | null;
   onPlay: (segmentIndex: number) => void;
 }) {
+  const c = t(lang);
   return (
     <div>
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-[2rem] leading-tight">
-          Her words
+          {c.herWords}
         </h1>
-        <p className="mt-2 text-rice/60">
-          {payload.phrases.length} things {speaker} said. She is the pronunciation guide &mdash;
-          nothing here is a machine voice.
-        </p>
+        <p className="mt-2 text-rice/60">{c.pronunciationNote}</p>
       </header>
 
       <ol className="mt-8 space-y-5">
@@ -46,20 +47,20 @@ export default function PhraseCoachPlayer({
             {p.whenToUse && (
               <p className="mt-3 text-[0.95rem] text-rice/55">
                 <span className="font-mono text-[10px] tracking-[0.18em] text-jade uppercase">
-                  When
+                  {c.when}
                 </span>{" "}
                 {p.whenToUse}
               </p>
             )}
 
-            {p.askHer && <AskHer question={p.askHer} />}
+            {p.askHer && <AskHer question={p.askHer} lang={lang} />}
 
             <div className="mt-4">
               <HerVoice
                 speaker={speaker}
+                lang={lang}
                 playing={activeIndex === p.segmentIndex}
                 onPlay={() => onPlay(p.segmentIndex)}
-                label={activeIndex === p.segmentIndex ? "Listen" : "Hear her say it"}
               />
             </div>
           </li>

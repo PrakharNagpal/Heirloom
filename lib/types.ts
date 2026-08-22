@@ -111,6 +111,11 @@ export type PhraseCoachPayload = {
   openQuestions: string[];
 };
 
+export type StorybookPayload = {
+  panels: { caption: string; imagePrompt: string; segmentIndex: number }[];
+  openQuestions: string[];
+};
+
 export const FORMAT_LABELS: Record<LessonFormat, string> = {
   cookalong: "Cook along with her",
   branching: "Live her decision",
@@ -121,7 +126,12 @@ export const FORMAT_LABELS: Record<LessonFormat, string> = {
 };
 
 // The three we ship. The rest render as honest greyed-out cards.
-export const SHIPPED_FORMATS: LessonFormat[] = ["cookalong", "branching", "phrasecoach"];
+export const SHIPPED_FORMATS: LessonFormat[] = [
+  "cookalong",
+  "branching",
+  "phrasecoach",
+  "storybook",
+];
 
 /**
  * What she might be speaking. This is a hint we pass to Gemini, never a

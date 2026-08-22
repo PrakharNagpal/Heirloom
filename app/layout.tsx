@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Sans, Noto_Sans_Tamil, Noto_Sans_Mono } from "next/font/google";
 import "./globals.css";
+import OfflineReady from "@/components/OfflineReady";
 
 // Display face. Used large and sparingly.
 const fraunces = Fraunces({
@@ -39,6 +40,8 @@ export const metadata: Metadata = {
   description:
     "Your grandmother's story, in her voice, as something her grandchildren will actually do.",
   manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Heirloom" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -56,6 +59,8 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- next/font
+            cannot self-host this family's CJK ranges; see the note above. */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600&display=swap"
@@ -64,6 +69,7 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${notoSans.variable} ${notoSansTamil.variable} ${notoSansMono.variable} antialiased`}
       >
+        <OfflineReady />
         {children}
       </body>
     </html>

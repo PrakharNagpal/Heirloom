@@ -42,7 +42,27 @@ function memoryContext(memory: Memory, target: Lang): string {
   });
 }
 
-const FORMAT_INSTRUCTIONS: Record<"cookalong" | "branching" | "phrasecoach", string> = {
+/**
+ * One fixed style, appended to every panel prompt. Non-negotiable: six independent
+ * image calls otherwise produce six unrelated styles and the book looks broken.
+ *
+ * "Illustrated" is also an ethical line, not only an aesthetic one — we draw the
+ * memory rather than manufacture a photograph of a real woman that her family might
+ * one day mistake for real.
+ */
+export const STORYBOOK_STYLE =
+  "Soft gouache children's-book illustration with visible brush texture and gentle " +
+  "rounded shapes, warm muted palette of deep teal, jade green, dusty rose and cream. " +
+  "Setting: a working-class Singaporean Chinese family kitchen in the 1960s — tiled " +
+  "floor, louvred window, wooden stool, enamelware, charcoal or single gas ring. " +
+  "The people are Singaporean Chinese, with simple stylised faces, clearly drawn and " +
+  "never photorealistic. Soft natural daylight. Square composition. " +
+  "No text, no letters, no numbers, no signage or writing anywhere in the image.";
+
+const FORMAT_INSTRUCTIONS: Record<
+  "cookalong" | "branching" | "phrasecoach" | "storybook",
+  string
+> = {
   cookalong: `Make a cook-along: her recipe as steps someone can actually follow standing in a kitchen.
 
 - Keep her asides. "My mother always added more sugar" belongs in "tip", attached to the step it interrupts.
@@ -59,6 +79,16 @@ const FORMAT_INSTRUCTIONS: Record<"cookalong" | "branching" | "phrasecoach", str
 - Every node's "text" must come from something she said, and "segmentIndex" points at it.
 - A node reached by a choice she did not take describes what would have happened without claiming it did. Do not invent a consequence and present it as her life.
 - Every "nextId" must be the id of a node in the list, or the empty string for an ending. Do not point at a node you did not write.`,
+
+  storybook: `Make a picture book of this memory for a grandchild aged 6 to 10.
+
+- Exactly six panels, in the order the memory happened.
+- "caption" is one or two short sentences a seven-year-old can read alone. Plain words, present tense, concrete things they can picture. No idioms, no dates, no numbers they would not understand. Warm, never babyish.
+- Each panel is one moment you could draw: a person doing a thing in a place. Not a summary, not a feeling.
+- "imagePrompt" describes ONLY what is visible in that moment — who is in it, what they are doing, where, what is around them. Write it in English regardless of the caption language, and keep it under forty words. Do not name a style, a medium or a colour palette; one is added for you so all six panels match.
+- Never ask for text, letters, numbers, signs or writing in a picture. They come out garbled.
+- Do not describe a real photograph or a specific real person's face. These are illustrations.
+- Use what she actually said. If the memory does not show what a panel needs, draw the part she did describe rather than inventing a scene.`,
 
   phrasecoach: `Make a phrase coach from the words she actually used.
 
@@ -163,6 +193,32 @@ const BRANCHING_SCHEMA = {
   propertyOrdering: ["premise", "nodes", "trueEndingId", "openQuestions"],
 };
 
+const STORYBOOK_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    panels: {
+      type: Type.ARRAY,
+      description: "Exactly six, in the order the memory happened.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          caption: { type: Type.STRING, description: "One or two short sentences for a 6–10 year old." },
+          imagePrompt: {
+            type: Type.STRING,
+            description: "What is visible, in English, under forty words. No style, no text.",
+          },
+          segmentIndex: SEGMENT_INDEX,
+        },
+        required: ["caption", "imagePrompt", "segmentIndex"],
+        propertyOrdering: ["caption", "imagePrompt", "segmentIndex"],
+      },
+    },
+    openQuestions: OPEN_QUESTIONS,
+  },
+  required: ["panels", "openQuestions"],
+  propertyOrdering: ["panels", "openQuestions"],
+};
+
 const PHRASECOACH_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -194,4 +250,5 @@ export const LESSON_SCHEMAS: Record<string, object> = {
   cookalong: COOKALONG_SCHEMA,
   branching: BRANCHING_SCHEMA,
   phrasecoach: PHRASECOACH_SCHEMA,
+  storybook: STORYBOOK_SCHEMA,
 };

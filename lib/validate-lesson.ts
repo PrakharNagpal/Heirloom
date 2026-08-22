@@ -1,5 +1,6 @@
 import type {
   BranchingPayload,
+  StorybookPayload,
   CookalongPayload,
   LessonFormat,
   Memory,
@@ -105,6 +106,28 @@ export function validateLesson(
     return { payload: { phrases, openQuestions } as PhraseCoachPayload, issues };
   }
 
+  if (format === "storybook") {
+    const raw = Array.isArray(r.panels) ? (r.panels as unknown[]) : [];
+    if (raw.length < 3) fail(`A storybook needs six panels; ${raw.length} came back.`);
+    const panels = raw.slice(0, 6).map((p, i) => {
+      const o = (p ?? {}) as Record<string, unknown>;
+      const caption = str(o.caption);
+      const imagePrompt = str(o.imagePrompt);
+      if (!caption) fail(`Panel ${i + 1} has no caption.`);
+      if (!imagePrompt) fail(`Panel ${i + 1} has nothing to draw.`);
+      // Text in a generated image comes out garbled, and worse in non-Latin scripts.
+      if (/\b(text|words?|letters?|writing|sign|label|caption|title)\b/i.test(imagePrompt))
+        issues.push(`Panel ${i + 1} asks for writing in the picture — it will come out garbled.`);
+      return {
+        caption,
+        imagePrompt,
+        segmentIndex: segIndex(o.segmentIndex, count, `Panel ${i + 1}`),
+      };
+    });
+    if (panels.length < 6) issues.push(`Only ${panels.length} panels — the book is short.`);
+    return { payload: { panels, openQuestions } as StorybookPayload, issues };
+  }
+
   if (format === "branching") {
     const rawNodes = Array.isArray(r.nodes) ? (r.nodes as unknown[]) : [];
     if (rawNodes.length < 2) fail("A branching story needs at least two nodes.");
@@ -184,6 +207,16 @@ export function buildFallback(format: LessonFormat, memory: Memory, lang: string
   const line = (i: number) =>
     memory.segments[i].translations[lang as keyof (typeof memory.segments)[0]["translations"]] ??
     memory.segments[i].originalText;
+
+  if (format === "storybook")
+    return {
+      panels: memory.segments.slice(0, 6).map((s, i) => ({
+        caption: line(i),
+        imagePrompt: `${memory.speakerName} in the scene she describes: ${line(i)}`,
+        segmentIndex: i,
+      })),
+      openQuestions: [`Ask ${memory.speakerName} what this looked like.`],
+    } satisfies StorybookPayload;
 
   if (format === "phrasecoach")
     return {

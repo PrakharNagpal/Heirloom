@@ -11,16 +11,14 @@ import { useSegmentAudio } from "@/lib/use-segment-audio";
 import {
   deleteMemory,
   getMemory,
-  readLang,
   updateMemory,
-  writeLang,
   type StoredMemory,
 } from "@/lib/store";
 import { addLanguage } from "@/lib/translate-client";
+import { FORMAT_NAMES, t } from "@/lib/ui-strings";
+import { useLang } from "@/lib/use-lang";
 import {
   availableLanguages,
-  FORMAT_LABELS,
-  LANGUAGES,
   LANGUAGE_LABELS,
   SHIPPED_FORMATS,
   type Lang,
@@ -32,16 +30,15 @@ export default function MemoryPage() {
   const router = useRouter();
 
   const [entry, setEntry] = useState<StoredMemory | null | undefined>(undefined);
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useLang();
   const { activeIndex, currentSec, failed, playSegment, seek } = useSegmentAudio(entry ?? null);
   const [translating, setTranslating] = useState<Lang | null>(null);
   const [translateError, setTranslateError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setEntry(getMemory(id));
-    const saved = readLang();
-    if (saved && (LANGUAGES as readonly string[]).includes(saved)) setLang(saved as Lang);
-  }, [id]);
+  // Reading client-only storage after mount: there is no localStorage or IndexedDB
+  // during SSR, so this cannot be an initial state value.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setEntry(getMemory(id)), [id]);
 
   const available = useMemo(
     () => (entry ? availableLanguages(entry.memory.segments) : []),
@@ -59,7 +56,6 @@ export default function MemoryPage() {
       setTranslateError(null);
       if (available.includes(l)) {
         setLang(l);
-        writeLang(l);
         return;
       }
       setTranslating(l);
@@ -68,16 +64,13 @@ export default function MemoryPage() {
         updateMemory(memory);
         setEntry({ ...entry, memory });
         setLang(l);
-        writeLang(l);
       } catch (e) {
-        setTranslateError(
-          e instanceof Error ? e.message : "That language didn't come through."
-        );
+        setTranslateError(e instanceof Error ? e.message : t(lang).tryAgain);
       } finally {
         setTranslating(null);
       }
     },
-    [entry, available]
+    [entry, available, setLang, lang]
   );
 
   const suggested = useMemo(() => {
@@ -93,20 +86,21 @@ export default function MemoryPage() {
   if (entry === null)
     return (
       <Shell>
-        <h1 className="font-[family-name:var(--font-display)] text-3xl">That memory is gone.</h1>
-        <p className="mt-3 text-rice/60">It may have been deleted, or saved on another phone.</p>
-        <BackLink href="/">Back to the start</BackLink>
+        <h1 className="font-[family-name:var(--font-display)] text-3xl">{t(lang).gone}</h1>
+        <p className="mt-3 text-rice/60">{t(lang).goneSub}</p>
+        <BackLink href="/">{t(lang).backToStart}</BackLink>
       </Shell>
     );
 
   const { memory, peaks } = entry;
+  const c = t(lang);
   const activeRange = activeIndex === null ? null : memory.segments[activeIndex];
   // Falls back to English, then to her own words — never to a blank screen.
   const shown: Lang = available.includes(lang) ? lang : (available[0] ?? "en");
 
   return (
     <Shell>
-      <BackLink href="/">Back</BackLink>
+      <BackLink href="/">{c.back}</BackLink>
 
       <header className="mt-6">
         <p className="font-mono text-[11px] tracking-[0.18em] text-jade uppercase">
@@ -140,7 +134,7 @@ export default function MemoryPage() {
         </div>
         {translating && (
           <p className="mt-2 text-xs text-rice/50">
-            Putting her words into {LANGUAGE_LABELS[translating]}. Once only &mdash; it stays.
+            {c.translatingInto} {LANGUAGE_LABELS[translating]}. {c.onceOnly}
           </p>
         )}
         {translateError && <p className="mt-2 text-xs text-kueh">{translateError}</p>}
@@ -158,22 +152,23 @@ export default function MemoryPage() {
 
       <section className="mt-12">
         <h2 className="font-[family-name:var(--font-display)] text-2xl">
-          Now make something of it.
+          {c.nowMakeSomething}
         </h2>
         <p className="mt-2 text-sm text-rice/55">
-          {memory.suggestedFormats[0]?.reason ?? "Pick how you want to learn this."}
+          {memory.suggestedFormats[0]?.reason ?? c.pickHow}
         </p>
         <div className="mt-5 grid gap-3">
           {suggested.map((f) => (
-            <FormatCard key={f} format={f} memoryId={memory.id} />
+            <FormatCard key={f} format={f} memoryId={memory.id} lang={lang} />
           ))}
-          {(["storybook", "quiz", "skillcard"] as LessonFormat[]).map((f) => (
+          {/* Honest about what isn't built: greyed cards, not hidden. */}
+          {(["quiz", "skillcard"] as LessonFormat[]).map((f) => (
             <div
               key={f}
               className="rounded-2xl border border-jade/20 px-4 py-4 text-rice/30"
               aria-disabled
             >
-              {FORMAT_LABELS[f]} <span className="text-xs">· not yet</span>
+              {FORMAT_NAMES[lang][f]} <span className="text-xs">· {c.notYet}</span>
             </div>
           ))}
         </div>
@@ -182,26 +177,34 @@ export default function MemoryPage() {
       {!entry.seeded && (
         <button
           onClick={async () => {
-            if (!confirm("Delete this memory and her recording? This cannot be undone.")) return;
+            if (!confirm(c.deleteConfirm)) return;
             await deleteMemory(memory.id);
             router.push("/");
           }}
           className="mt-12 min-h-12 self-start text-left text-sm text-rice/40 underline underline-offset-4"
         >
-          Delete this memory and her recording
+          {c.deleteMemory}
         </button>
       )}
     </Shell>
   );
 }
 
-function FormatCard({ format, memoryId }: { format: LessonFormat; memoryId: string }) {
+function FormatCard({
+  format,
+  memoryId,
+  lang,
+}: {
+  format: LessonFormat;
+  memoryId: string;
+  lang: Lang;
+}) {
   return (
     <Link
       href={`/lesson/${memoryId}?format=${format}`}
       className="flex items-center justify-between rounded-2xl bg-jade/15 px-4 py-4 text-rice transition hover:bg-jade/25"
     >
-      {FORMAT_LABELS[format]}
+      {FORMAT_NAMES[lang][format]}
       <span aria-hidden className="text-kueh">
         &rarr;
       </span>

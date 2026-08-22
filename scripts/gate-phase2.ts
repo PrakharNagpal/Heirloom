@@ -117,6 +117,11 @@ async function main() {
   });
   check(small.length === 0, `Every tap target is at least 44px${small.length ? ` (small: ${small.slice(0, 3).join(", ")})` : ""}`);
 
+  // The chrome is translated too, so leave the app in English before asserting on
+  // English copy below — the switcher's choice now persists.
+  await page.getByRole("button", { name: "தமிழ்", exact: true }).click();
+  await page.waitForTimeout(250);
+
   // ---- refresh survival ----
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForTimeout(1200);
@@ -124,6 +129,10 @@ async function main() {
     .getByRole("button", { name: "தமிழ்", exact: true })
     .getAttribute("aria-pressed");
   check(langAfter === "true", "Language choice survives a refresh");
+  check(
+    (await page.locator("main").innerText()).includes("பின்செல்"),
+    "The app's own words are in Tamil too, not just the transcript"
+  );
   check(
     (await page.getByRole("button", { name: /hear her say line/i }).count()) >= 5,
     "Memory still there after refresh"
@@ -138,12 +147,15 @@ async function main() {
   check(!!post && !post.paused && post.t > 0, "Her audio still plays after a refresh");
 
   // ---- format picker ----
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.waitForTimeout(300);
   check(
     (await page.getByRole("link", { name: /Cook along|Learn her words|Live her decision/ }).count()) >= 2,
     "Format picker offers the shipped formats"
   );
+  // Storybook shipped, so quiz and skill card are what remain unbuilt.
   check(
-    (await page.getByText(/not yet/).count()) >= 3,
+    (await page.getByText(/not yet/).count()) >= 2,
     "Unbuilt formats shown honestly as greyed-out cards"
   );
 
