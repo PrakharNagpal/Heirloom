@@ -69,6 +69,10 @@ yarn-error.log*
 !public/icon-maskable-512.png
 !public/apple-touch-icon.png
 
+# The exception to the exception: README screenshots are a deliverable. They are
+# `npm run shots` output off the seeded memories, so no real person is in them.
+!docs/screenshots/*.png
+
 # editors and OS
 .DS_Store
 .idea/

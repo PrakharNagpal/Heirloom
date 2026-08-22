@@ -15,7 +15,8 @@
     "gate:players": "tsx scripts/gate-phase4.ts",
     "gate:design": "tsx scripts/gate-phase5.ts",
     "gate:freeze": "tsx scripts/gate-phase6.ts",
-    "gate:storybook": "tsx scripts/gate-storybook.ts"
+    "gate:storybook": "tsx scripts/gate-storybook.ts",
+    "shots": "tsx scripts/shots.ts"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",

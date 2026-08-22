@@ -7,6 +7,24 @@ Ah Ma talks for two minutes in Teochew. Heirloom returns a cook-along, a branchi
 story, or a dialect phrase coach — in English, Mandarin, Malay or Tamil — with her
 original audio still attached under every line. Tap any sentence and hear her say it.
 
+<table>
+<tr>
+<td width="25%"><img src="docs/screenshots/home.png" alt="Home screen: two saved memories from Ah Ma, a four-language switcher, and one rose button to record a new one"></td>
+<td width="25%"><img src="docs/screenshots/record.png" alt="Record screen: one question to ask her, a live level meter, and a single button"></td>
+<td width="25%"><img src="docs/screenshots/transcript.png" alt="Transcript spine: her Mandarin with the English under each line, every line playable"></td>
+<td width="25%"><img src="docs/screenshots/stories.png" alt="Stories screen: every memory with the four ways to go through it"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Home</b></sub></td>
+<td align="center"><sub><b>Record</b></sub></td>
+<td align="center"><sub><b>Her words</b></sub></td>
+<td align="center"><sub><b>Stories</b></sub></td>
+</tr>
+</table>
+
+Every screenshot here is the running app at 390px, shot off the two seeded memories
+by `npm run shots` — no mockups, and nothing in them calls the model.
+
 The build plan, spec and clock live in [HEIRLOOM.md](./HEIRLOOM.md).
 
 ## Why Gemini is essential, not decorative
@@ -103,6 +121,23 @@ but never says for how long, it produced:
 and no quantity, time or temperature anywhere in the lesson. That gap is the feature:
 the app's job is not to replace the conversation, it is to start one.
 
+<table>
+<tr>
+<td width="33%"><img src="docs/screenshots/cookalong.png" alt="Cook-along lesson: what she used, then numbered steps, each with a speaker button and her own aside"></td>
+<td width="33%"><img src="docs/screenshots/branching.png" alt="Branching story: you are Ah Ma at fourteen, with two choices at the flame"></td>
+<td width="33%"><img src="docs/screenshots/phrasecoach.png" alt="Phrase coach: her Mandarin phrase, pinyin, the meaning, and when to use it"></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Cook-along</b></sub></td>
+<td align="center"><sub><b>Branching story</b></sub></td>
+<td align="center"><sub><b>Phrase coach</b></sub></td>
+</tr>
+</table>
+
+The speaker on every card is the `segmentIndex` doing its job — tap it and the
+sentence that step came from plays in her voice. The first cook-along step above
+is a gap prompt: she never said how many coconuts, so it asks instead of guessing.
+
 ## The picture book
 
 The fourth format turns the memory into six illustrated pages for a grandchild too
@@ -126,6 +161,10 @@ The drawings do not depend on the reading language — the caption changes, the 
 does not — so a panel is drawn once per memory and reused across all four. The seeded
 memory's six pages ship in `/public/storybook/`, which is why the book opens in a
 tenth of a second and works with the network off.
+
+<p align="center">
+<img src="docs/screenshots/storybook.png" width="300" alt="Storybook: six illustrated pages in one consistent style, her voice under each caption">
+</p>
 
 ## Safety
 
@@ -187,6 +226,14 @@ npm run gate:freeze      # the offline test, against a production build
 
 `gate:generate` and `gate:players` call the model; the rest are free.
 
+The screenshots in this README come off the same machinery, so they cannot drift
+from the app:
+
+```bash
+npm run dev
+npm run shots           # -> docs/screenshots/*.png, 390px, seeded memories only
+```
+
 ## The design
 
 Rice ground, lacquer type, kueh-rose for anything you act on. The palette comes from
@@ -195,9 +242,10 @@ cream-and-terracotta every other AI demo arrives in. `design.md` is the spec.
 
 Three rules do most of the work:
 
-**One dark screen.** Everything is light except Record, which is full-bleed lacquer
-with the tab bar hidden and exactly one thing to press. That is the screen *she*
-holds; the rest of the app is for the grandchild.
+**One screen with nothing on it.** Record keeps the same rice ground as everywhere
+else — it should not feel like a different app — but the tab bar is hidden and there
+is exactly one thing to press. That is the screen *she* holds; everything else is
+for the grandchild.
 
 **Gold-leaf is never an accent.** It appears in three places and nowhere else: a gap
 prompt, an uncertain-word marker, and the moment her memory is kept. A colour used
