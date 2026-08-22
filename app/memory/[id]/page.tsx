@@ -7,8 +7,8 @@ import { useParams, useRouter } from "next/navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import TranscriptSpine from "@/components/TranscriptSpine";
 import VoiceSpine from "@/components/VoiceSpine";
+import { useSegmentAudio } from "@/lib/use-segment-audio";
 import {
-  audioUrlFor,
   deleteMemory,
   getMemory,
   readLang,
@@ -33,10 +33,7 @@ export default function MemoryPage() {
 
   const [entry, setEntry] = useState<StoredMemory | null | undefined>(undefined);
   const [lang, setLang] = useState<Lang>("en");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [currentSec, setCurrentSec] = useState(0);
-  const [seekRequest, setSeekRequest] = useState<{ sec: number; nonce: number } | null>(null);
+  const { activeIndex, currentSec, failed, playSegment, seek } = useSegmentAudio(entry ?? null);
   const [translating, setTranslating] = useState<Lang | null>(null);
   const [translateError, setTranslateError] = useState<string | null>(null);
 
@@ -45,22 +42,6 @@ export default function MemoryPage() {
     const saved = readLang();
     if (saved && (LANGUAGES as readonly string[]).includes(saved)) setLang(saved as Lang);
   }, [id]);
-
-  // Object URLs die on refresh, so the blob is fetched from IndexedDB every mount.
-  useEffect(() => {
-    if (!entry) return;
-    let revokeUrl: string | null = null;
-    let cancelled = false;
-    void audioUrlFor(entry).then((res) => {
-      if (!res || cancelled) return;
-      setAudioUrl(res.url);
-      if (res.revoke) revokeUrl = res.url;
-    });
-    return () => {
-      cancelled = true;
-      if (revokeUrl) URL.revokeObjectURL(revokeUrl);
-    };
-  }, [entry]);
 
   const available = useMemo(
     () => (entry ? availableLanguages(entry.memory.segments) : []),
@@ -147,7 +128,7 @@ export default function MemoryPage() {
           durationSec={memory.durationSec}
           currentSec={currentSec}
           activeRange={activeRange}
-          onSeek={(sec) => setSeekRequest({ sec, nonce: Date.now() })}
+          onSeek={seek}
         />
         <div className="mt-3">
           <LanguageSwitcher
@@ -169,11 +150,9 @@ export default function MemoryPage() {
         <TranscriptSpine
           segments={memory.segments}
           lang={shown}
-          audioUrl={audioUrl}
           activeIndex={activeIndex}
-          onActiveIndexChange={setActiveIndex}
-          onTimeUpdate={setCurrentSec}
-          seekRequest={seekRequest}
+          failed={failed}
+          onPlay={playSegment}
         />
       </section>
 

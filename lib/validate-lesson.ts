@@ -125,11 +125,14 @@ export function validateLesson(
     });
 
     const ids = new Set(nodes.map((n) => n.id));
-    // A choice pointing at a node that doesn't exist is a dead end mid-story.
+    // A choice has to lead somewhere. An empty nextId is the schema's way of saying
+    // "this is the end" — keeping it renders a dead button the reader cannot press,
+    // and hides the ending. A nextId naming a node we don't have is a dead end
+    // mid-story. Both are dropped, which turns the node into a proper ending.
     for (const n of nodes) {
       n.choices = n.choices.filter((c) => {
-        if (!c.label) return false;
-        if (c.nextId && !ids.has(c.nextId)) {
+        if (!c.label || !c.nextId) return false;
+        if (!ids.has(c.nextId)) {
           issues.push(`Node "${n.id}" offered a choice leading nowhere — removed.`);
           return false;
         }

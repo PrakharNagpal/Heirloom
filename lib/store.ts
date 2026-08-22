@@ -1,6 +1,6 @@
 "use client";
 
-import type { Memory } from "./types";
+import type { Lang, Lesson, LessonFormat, Memory } from "./types";
 import { SEED_MEMORY } from "./seed";
 
 /**
@@ -14,6 +14,7 @@ import { SEED_MEMORY } from "./seed";
  */
 
 const INDEX_KEY = "heirloom.memories.v1";
+const LESSON_KEY = "heirloom.lessons.v1";
 const LANG_KEY = "heirloom.lang.v1";
 const DB_NAME = "heirloom";
 const DB_STORE = "audio";
@@ -76,6 +77,13 @@ export function updateMemory(memory: Memory) {
 /** Removes the memory and its audio. Deletion has to actually delete. */
 export async function deleteMemory(id: string) {
   writeIndex(readIndex().filter((m) => m.memory.id !== id));
+  try {
+    const all = readLessons();
+    for (const k of Object.keys(all)) if (k.startsWith(`${id}::`)) delete all[k];
+    window.localStorage.setItem(LESSON_KEY, JSON.stringify(all));
+  } catch {
+    /* nothing stored */
+  }
   await deleteAudio(id);
 }
 
@@ -140,6 +148,46 @@ export async function audioUrlFor(
     /* fall through */
   }
   return entry.memory.audioUrl ? { url: entry.memory.audioUrl, revoke: false } : null;
+}
+
+// ---- lessons ---------------------------------------------------------------
+
+/**
+ * A lesson costs about twenty seconds and a fraction of a cent to write, and it
+ * never changes once written. So it is generated once per memory + format +
+ * language and kept. Coming back to it, or switching away and back, is instant
+ * and free.
+ */
+export function lessonKey(memoryId: string, format: LessonFormat, language: Lang) {
+  return `${memoryId}::${format}::${language}`;
+}
+
+function readLessons(): Record<string, Lesson> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(LESSON_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, Lesson>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getLesson(
+  memoryId: string,
+  format: LessonFormat,
+  language: Lang
+): Lesson | null {
+  return readLessons()[lessonKey(memoryId, format, language)] ?? null;
+}
+
+export function saveLesson(lesson: Lesson) {
+  try {
+    const all = readLessons();
+    all[lessonKey(lesson.memoryId, lesson.format, lesson.language as Lang)] = lesson;
+    window.localStorage.setItem(LESSON_KEY, JSON.stringify(all));
+  } catch {
+    // Quota. The lesson still renders this session; it just isn't kept.
+  }
 }
 
 // ---- language preference ---------------------------------------------------

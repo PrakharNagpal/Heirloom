@@ -12,6 +12,7 @@ export default function VoiceSpine({
   currentSec,
   activeRange,
   orientation = "horizontal",
+  compact = false,
   onSeek,
 }: {
   peaks: number[];
@@ -19,6 +20,8 @@ export default function VoiceSpine({
   currentSec: number;
   activeRange?: { startSec: number; endSec: number } | null;
   orientation?: "horizontal" | "vertical";
+  /** Shorter, for the bar pinned above a lesson where height is expensive. */
+  compact?: boolean;
   onSeek?: (sec: number) => void;
 }) {
   const vertical = orientation === "vertical";
@@ -49,7 +52,7 @@ export default function VoiceSpine({
       aria-valuenow={Math.round(currentSec)}
       tabIndex={onSeek ? 0 : undefined}
       className={`relative ${onSeek ? "cursor-pointer" : ""} ${
-        vertical ? "h-full w-12 flex-col" : "h-14 w-full"
+        vertical ? "h-full w-12 flex-col" : compact ? "h-9 w-full" : "h-14 w-full"
       } flex items-center gap-px`}
     >
       {peaks.map((p, i) => {

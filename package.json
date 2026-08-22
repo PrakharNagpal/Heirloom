@@ -11,7 +11,8 @@
     "models": "tsx scripts/test-understand.ts --models",
     "typecheck": "tsc --noEmit",
     "gate:spine": "tsx scripts/gate-phase2.ts",
-    "gate:generate": "tsx scripts/test-generate.ts"
+    "gate:generate": "tsx scripts/test-generate.ts",
+    "gate:players": "tsx scripts/gate-phase4.ts"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",

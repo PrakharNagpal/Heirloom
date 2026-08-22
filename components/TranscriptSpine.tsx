@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { Lang, Segment } from "@/lib/types";
 
 /**
@@ -11,78 +10,18 @@ import type { Lang, Segment } from "@/lib/types";
 export default function TranscriptSpine({
   segments,
   lang,
-  audioUrl,
   activeIndex,
-  onActiveIndexChange,
-  onTimeUpdate,
-  seekRequest,
+  failed,
+  onPlay,
 }: {
   segments: Segment[];
   lang: Lang;
-  audioUrl: string | null;
   activeIndex: number | null;
-  onActiveIndexChange: (i: number | null) => void;
-  onTimeUpdate?: (sec: number) => void;
-  /** A {sec} bumped by the parent when the spine is scrubbed. */
-  seekRequest?: { sec: number; nonce: number } | null;
+  failed?: boolean;
+  onPlay: (i: number) => void;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const stopAt = useRef<number | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  // Stop at the end of the tapped segment rather than running into the next one.
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    const onTime = () => {
-      onTimeUpdate?.(el.currentTime);
-      if (stopAt.current !== null && el.currentTime >= stopAt.current) {
-        el.pause();
-        stopAt.current = null;
-        onActiveIndexChange(null);
-      }
-    };
-    const onEnded = () => {
-      stopAt.current = null;
-      onActiveIndexChange(null);
-    };
-    el.addEventListener("timeupdate", onTime);
-    el.addEventListener("ended", onEnded);
-    return () => {
-      el.removeEventListener("timeupdate", onTime);
-      el.removeEventListener("ended", onEnded);
-    };
-  }, [onActiveIndexChange, onTimeUpdate]);
-
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el || !seekRequest) return;
-    el.currentTime = seekRequest.sec;
-    stopAt.current = null;
-    void el.play().catch(() => setFailed(true));
-    onActiveIndexChange(null);
-  }, [seekRequest, onActiveIndexChange]);
-
-  const play = (i: number) => {
-    const el = audioRef.current;
-    const seg = segments[i];
-    if (!el || !seg) return;
-    if (activeIndex === i && !el.paused) {
-      el.pause();
-      stopAt.current = null;
-      onActiveIndexChange(null);
-      return;
-    }
-    el.currentTime = seg.startSec;
-    stopAt.current = seg.endSec;
-    onActiveIndexChange(i);
-    void el.play().catch(() => setFailed(true));
-  };
-
   return (
     <div>
-      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
-
       {failed && (
         <p className="mb-4 rounded-xl bg-kueh/15 px-4 py-3 text-sm text-rice/80">
           Her recording won&rsquo;t play on this browser. The words are all still here.
@@ -95,12 +34,10 @@ export default function TranscriptSpine({
           return (
             <li key={i}>
               <button
-                onClick={() => play(i)}
+                onClick={() => onPlay(i)}
                 aria-label={`Hear her say line ${i + 1}`}
                 className={`w-full rounded-2xl border-l-4 px-4 py-3 text-left transition ${
-                  active
-                    ? "border-kueh bg-jade/25"
-                    : "border-jade/40 bg-jade/10 hover:bg-jade/20"
+                  active ? "border-kueh bg-jade/25" : "border-jade/40 bg-jade/10 hover:bg-jade/20"
                 }`}
               >
                 <span className="mb-1 flex items-center gap-2">
@@ -140,7 +77,7 @@ export default function TranscriptSpine({
   );
 }
 
-function timecode(sec: number) {
+export function timecode(sec: number) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec - m * 60);
   return `${m}:${String(s).padStart(2, "0")}`;
