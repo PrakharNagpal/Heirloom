@@ -163,6 +163,31 @@ tenth of a second and works with the network off.
 <img src="docs/screenshots/storybook.png" width="300" alt="Storybook: six illustrated pages in one consistent style, her voice under each caption">
 </p>
 
+## Which model does what
+
+Four jobs, four chains. Each is a comma-separated fallback list tried left to right,
+overridable by env var — because a preview model id that works on one project is a
+404 on another, and finding that out at the venue is not the plan.
+
+| Job | Route | Chain (first choice first) | Why that tier |
+|---|---|---|---|
+| **Understand her** — audio in, transcript + translation + structure out | `/api/understand` | `gemini-3.1-pro-preview` → `gemini-3.7-flash` → `gemini-2.5-pro` | The audio pass is where dialect accuracy lives, so it gets the Pro tier. This is the only call that touches her voice, and there is no transcription service in front of it |
+| **Write a lesson** — memory + format → structured JSON | `/api/generate` | `gemini-3.7-flash` → `gemini-2.5-flash` | Writing against a fixed schema. Flash is ~20s and a fraction of a cent |
+| **Add a language** — her lines into one more language | `/api/translate` | `gemini-3.7-flash` → `gemini-2.5-flash` | Text only, fired once per language per memory and then stored |
+| **Draw a storybook page** | `/api/illustrate` | `gemini-2.5-flash-image` → `gemini-3-pro-image` | Flash-image is 4s against Pro-image's 15–30s at the same quality here. **A book is pinned to whichever model draws its first page** — mixing the two produced a Singapore kitchen on one page and a European one on the next |
+
+Overrides: `GEMINI_UNDERSTAND_MODEL`, `GEMINI_GENERATE_MODEL`, `GEMINI_IMAGE_MODEL`.
+`/api/hello` calls the generate chain as a credentials smoke test.
+
+**No text-to-speech model, anywhere.** Not as an oversight — as the product. Every
+voice you hear in this app is her original recording, played from a timestamp. A
+synthetic grandparent voice is not something a family can consent to on behalf of
+someone who may not be around to object.
+
+**Measured on the seeded memories:** ~32–53s for the audio pass, ~10–20s per lesson,
+~10s per added language, ~7s per drawing. All of it is pre-computed and shipped, so
+the demo makes no model calls at all.
+
 ## Safety
 
 - **No invented memories.** Where a lesson needs a detail she didn't give, it renders
