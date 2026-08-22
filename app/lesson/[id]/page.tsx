@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import VoiceSpine from "@/components/VoiceSpine";
 import AskHer from "@/components/players/AskHer";
 import BranchingPlayer from "@/components/players/BranchingPlayer";
 import CookalongPlayer from "@/components/players/CookalongPlayer";
@@ -12,7 +11,7 @@ import PhraseCoachPlayer from "@/components/players/PhraseCoachPlayer";
 import StorybookPlayer from "@/components/players/StorybookPlayer";
 import { getLesson, getMemory, saveLesson, type StoredMemory } from "@/lib/store";
 import { useSegmentAudio } from "@/lib/use-segment-audio";
-import { FORMAT_NAMES, t } from "@/lib/ui-strings";
+import { t } from "@/lib/ui-strings";
 import { useLang } from "@/lib/use-lang";
 import {
   availableLanguages,
@@ -41,7 +40,7 @@ export default function LessonPage() {
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { activeIndex, currentSec, failed, playSegment, seek } = useSegmentAudio(entry ?? null);
+  const { activeIndex, failed, playSegment } = useSegmentAudio(entry ?? null);
 
   // Reading client-only storage after mount: there is no localStorage during SSR,
   // so this cannot be an initial state value.
@@ -96,14 +95,14 @@ export default function LessonPage() {
   if (entry === null || !SHIPPED_FORMATS.includes(format))
     return (
       <Shell>
-        <BackLink href="/">{t(lang).backToStart}</BackLink>
-        <h1 className="mt-8 font-[family-name:var(--font-display)] text-3xl">
+        <BackLink href="/">{t(lang).allMemories}</BackLink>
+        <h1 className="mt-6 font-[family-name:var(--font-display)] text-[24px] font-semibold">
           {entry === null ? t(lang).gone : t(lang).notYet}
         </h1>
       </Shell>
     );
 
-  const { memory, peaks } = entry;
+  const { memory } = entry;
   const speaker = memory.speakerName;
   const c = t(lang);
   const openQuestions =
@@ -113,61 +112,40 @@ export default function LessonPage() {
 
   return (
     <Shell>
-      <BackLink href={`/memory/${memory.id}`}>{c.backToHerWords}</BackLink>
-      <p className="font-mono text-[10px] tracking-[0.16em] text-jade uppercase">
-        {FORMAT_NAMES[lang][format]}
-      </p>
-
-      {/* The spine stays pinned: her voice is the thread through the whole lesson. */}
-      <div className="sticky top-0 z-10 -mx-6 mt-3 border-b border-jade/20 bg-lacquer/95 px-6 py-2 backdrop-blur">
-        <VoiceSpine
-          peaks={peaks}
-          durationSec={memory.durationSec}
-          currentSec={currentSec}
-          activeRange={activeIndex === null ? null : memory.segments[activeIndex]}
-          onSeek={seek}
-          compact
+      {/* The language switcher stays pinned: her audio never changes when you move
+          between languages, only the words do, and that is the point of the app. */}
+      <div className="sticky top-0 z-20 -mx-5 border-b border-line bg-[rgba(251,247,238,0.96)] px-5 py-2.5 backdrop-blur">
+        <LanguageSwitcher
+          lang={lang}
+          available={availableLanguages(memory.segments)}
+          loading={building ? lang : null}
+          onChange={setLang}
         />
-        {/* The switcher needs the full width at 390px — four language names in four
-            scripts do not fit beside a label, and clipping "Bahasa Mela…" reads as
-            broken rather than scrollable. */}
-        <div className="mt-2">
-          <LanguageSwitcher
-            lang={lang}
-            available={availableLanguages(memory.segments)}
-            loading={building ? lang : null}
-            onChange={setLang}
-          />
-        </div>
       </div>
 
       {failed && (
-        <p className="mt-4 rounded-xl bg-kueh/15 px-4 py-3 text-sm text-rice/80">
-          {c.wontPlay}
-        </p>
+        <p className="mt-4 rounded-[14px] bg-rose-tint px-4 py-3 text-[14.5px]">{c.wontPlay}</p>
       )}
 
-      {/* Rebuilding in another language keeps the old one on screen rather than
-          blanking it, so say plainly what is happening. */}
       {building && lesson && (
-        <p className="mt-4 rounded-xl bg-jade/20 px-4 py-3 text-sm text-rice/80">
+        <p className="mt-4 rounded-[14px] bg-sand px-4 py-3 text-[14.5px] text-muted">
           {c.writingThisIn} {LANGUAGE_LABELS[lang]}. {c.onceOnly}
         </p>
       )}
 
-      <div className={`mt-7 pb-16 transition-opacity ${building && lesson ? "opacity-40" : ""}`}>
+      <div className={`mt-4 transition-opacity ${building && lesson ? "opacity-40" : ""}`}>
         {building && !lesson ? (
-          <div className="flex flex-col items-center gap-4 py-20 text-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-3 border-jade/30 border-t-kueh" />
-            <p className="text-rice">{c.makingThis}</p>
-            <p className="text-sm text-rice/50">{c.writtenOnce}</p>
+          <div className="flex flex-col items-center gap-4 py-24 text-center">
+            <div className="h-9 w-9 animate-spin rounded-full border-2 border-line border-t-kueh" />
+            <p className="text-[16.5px]">{c.makingThis}</p>
+            <p className="text-[14.5px] text-muted">{c.writtenOnce}</p>
           </div>
         ) : error && !lesson ? (
           <div className="py-16">
-            <p className="text-rice">{error}</p>
+            <p>{error}</p>
             <button
               onClick={() => void write(lang)}
-              className="mt-5 min-h-12 rounded-full bg-kueh px-6 font-medium text-lacquer"
+              className="mt-5 min-h-12 rounded-full bg-kueh px-6 font-semibold text-white"
             >
               {c.tryAgain}
             </button>
@@ -181,6 +159,7 @@ export default function LessonPage() {
                 key={lesson.id}
                 lang={lang}
                 payload={lesson.payload as CookalongPayload}
+                memoryId={memory.id}
                 speaker={speaker}
                 activeIndex={activeIndex}
                 onPlay={playSegment}
@@ -191,6 +170,7 @@ export default function LessonPage() {
                 key={lesson.id}
                 lang={lang}
                 payload={lesson.payload as PhraseCoachPayload}
+                memoryId={memory.id}
                 speaker={speaker}
                 activeIndex={activeIndex}
                 onPlay={playSegment}
@@ -212,19 +192,20 @@ export default function LessonPage() {
                 key={lesson.id}
                 lang={lang}
                 payload={lesson.payload as BranchingPayload}
+                memoryId={memory.id}
                 speaker={speaker}
                 activeIndex={activeIndex}
                 onPlay={playSegment}
               />
             )}
 
-            {openQuestions.length > 0 && (
-              <section className="mt-14 border-t border-jade/20 pt-7">
-                <h2 className="font-[family-name:var(--font-display)] text-xl">
+            {format !== "storybook" && openQuestions.length > 0 && (
+              <section className="mt-10 border-t border-line pt-6">
+                <h2 className="font-[family-name:var(--font-display)] text-[19px] font-semibold">
                   {c.onlyShe}
                 </h2>
-                <p className="mt-2 text-sm text-rice/50">{c.weLeftThese}</p>
-                <div className="mt-4">
+                <p className="mt-1.5 text-[14.5px] text-muted">{c.weLeftThese}</p>
+                <div className="mt-3">
                   {openQuestions.map((q, i) => (
                     <AskHer key={i} question={q} lang={lang} />
                   ))}
@@ -239,7 +220,5 @@ export default function LessonPage() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="mx-auto flex min-h-screen max-w-[430px] flex-col px-6 py-8">{children}</main>
-  );
+  return <main className="with-nav mx-auto max-w-[430px] px-5 pt-3">{children}</main>;
 }

@@ -17,7 +17,7 @@ async function openBook(page: Page, lang?: string) {
     await page.getByRole("button", { name: lang, exact: true }).click();
     await page.waitForTimeout(500);
   }
-  await page.locator("figure img").first().waitFor({ state: "visible", timeout: 60_000 });
+  await page.locator("ol li img").first().waitFor({ state: "visible", timeout: 60_000 });
 }
 
 async function main() {
@@ -63,9 +63,22 @@ async function main() {
   );
   check(!drewLive, "Panels come from the repo — nothing is drawn live");
 
+  const cards = await page.locator("ol li").count();
+  check(cards === 6, `Six panels, all on one scrollable page (${cards})`);
+  check(
+    (await page.locator("ol li img").count()) === 6,
+    "Every panel has its illustration"
+  );
+  check(
+    (await page.getByRole("button", { name: /Hear Ah Ma say this/i }).count()) === 6,
+    "Every panel has her voice for its own segment"
+  );
+  check(
+    (await page.locator("ol li span.bg-kueh").count()) === 6,
+    "Every panel carries its numbered rose badge"
+  );
+
   // Consistent shape: a book of different-shaped pages reads as broken.
-  // Passed as a string: tsx compiles page.evaluate callbacks with an esbuild
-  // __name helper that does not exist in the browser.
   const shapes: string[] = await page.evaluate(`(async () => {
     const out = [];
     for (let i = 1; i <= 6; i++) {
@@ -77,41 +90,27 @@ async function main() {
     return out;
   })()`);
   check(new Set(shapes).size === 1, `All six pages are the same shape (${shapes[0]})`);
+  const [w, h] = shapes[0].split("x").map(Number);
+  check(Math.abs(w / h - 1.5) < 0.02, `Pages are 3:2 as design.md specifies (${(w / h).toFixed(2)})`);
 
-  // Her audio, on the page you are actually looking at.
+  // Her audio, on the panel you are looking at.
   await page.waitForFunction(`(() => { const el = document.querySelector("audio"); return !!el && el.readyState >= 1; })()`, null, { timeout: 20_000 });
-  const wanted = en.panels[0].segmentIndex;
-  await page.getByRole("button", { name: /Hear Ah Ma say this/i }).click();
+  await page.getByRole("button", { name: /Hear Ah Ma say this/i }).first().click();
   await page.waitForTimeout(900);
   const state: { t: number; paused: boolean } | null = await page.evaluate(
     `(() => { const el = document.querySelector("audio"); return el ? { t: el.currentTime, paused: el.paused } : null; })()`
   );
-  check(!!state && !state.paused && state.t > 0, `Her voice plays on page 1 (segment ${wanted}, at ${state?.t.toFixed(1)}s)`);
+  check(!!state && !state.paused && state.t > 0, `Her voice plays on page 1 (at ${state?.t.toFixed(1)}s)`);
 
-  // Swipe, because a six-year-old will try to. TouchEvent needs real Touch objects,
-  // which only document.createTouch-style construction gives us in Chromium.
-  await page.evaluate(`(() => {
-    const fig = document.querySelector("figure");
-    const mk = (x) => new Touch({ identifier: 1, target: fig, clientX: x, clientY: 200 });
-    fig.dispatchEvent(new TouchEvent("touchstart", { touches: [mk(320)], bubbles: true }));
-    fig.dispatchEvent(new TouchEvent("touchend", { changedTouches: [mk(80)], bubbles: true }));
-  })()`);
-  await page.waitForTimeout(400);
-  const swiped = await page.locator("nav span").innerText();
-  check(swiped.startsWith("2"), `Swiping turns the page (now on ${swiped})`);
-
-  // Buttons, for anyone who does not swipe.
-  await page.getByRole("button", { name: /Turn the page/i }).click();
-  await page.waitForTimeout(300);
-  check((await page.locator("nav span").innerText()).startsWith("3"), "Turn-the-page button works");
-
-  for (let i = 0; i < 4; i++) {
-    const next = page.getByRole("button", { name: /Turn the page/i });
-    if ((await next.count()) === 0 || (await next.isDisabled())) break;
-    await next.click();
-    await page.waitForTimeout(250);
-  }
-  check(await page.getByText("The end").isVisible(), "Reaches the end of the book");
+  const lastVoice = page.getByRole("button", { name: /Hear Ah Ma say this/i }).last();
+  await lastVoice.scrollIntoViewIfNeeded();
+  await page.evaluate(`(() => { const el = document.querySelector("audio"); if (el) el.pause(); })()`);
+  await lastVoice.click();
+  await page.waitForTimeout(900);
+  const last: { t: number; paused: boolean } | null = await page.evaluate(
+    `(() => { const el = document.querySelector("audio"); return el ? { t: el.currentTime, paused: el.paused } : null; })()`
+  );
+  check(!!last && !last.paused, `Her voice plays on the last page too (at ${last?.t.toFixed(1)}s)`);
 
   const overflow: number = await page.evaluate(
     `document.documentElement.scrollWidth - document.documentElement.clientWidth`
@@ -122,7 +121,7 @@ async function main() {
     "Says plainly that these are drawings, not photographs of her"
   );
 
-  // Second view is instant, from cache.
+  // Second view is instant, from the repo.
   const t1 = Date.now();
   await openBook(page);
   check(Date.now() - t1 < 4000, `Second view loads instantly (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
@@ -130,7 +129,7 @@ async function main() {
   // Captions in all four scripts.
   for (const [label, probe] of [["中文", /[一-鿿]/], ["தமிழ்", /[஀-௿]/]] as const) {
     await openBook(page, label);
-    const caption = await page.locator("figcaption").innerText();
+    const caption = await page.locator("ol li p").first().innerText();
     check(probe.test(caption), `Captions render in ${label} ("${caption.slice(0, 26)}…")`);
   }
 
@@ -144,7 +143,7 @@ async function main() {
   const failed = results.filter(([p]) => !p).length;
   console.log(`\n  ${results.length - failed}/${results.length} passed.\n`);
   console.log("  Still yours to do:");
-  console.log("    · Swipe it on a real phone, and look at all six pages as a set.\n");
+  console.log("    · Scroll it on a real phone, and look at all six pages as a set.\n");
   process.exit(failed ? 1 : 0);
 }
 

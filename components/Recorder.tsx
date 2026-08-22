@@ -9,6 +9,9 @@ import { SOURCE_LANGUAGES, type Lang, type Memory } from "@/lib/types";
 
 type Stage = "idle" | "recording" | "thinking" | "kept" | "error";
 
+/** A speech-shaped envelope for the live meter — flat bars read as a machine. */
+const BARS = [0.35, 0.6, 0.85, 0.5, 1, 0.7, 0.45, 0.9, 0.65, 1, 0.55, 0.8, 0.4, 0.7, 0.3];
+
 /** Long enough to be a memory, short enough to stay inside the inline request limit. */
 const MAX_SECONDS = 110;
 
@@ -147,64 +150,75 @@ export default function Recorder({
 
   if (stage === "thinking")
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-3 border-jade/30 border-t-kueh" />
-        <p className="text-rice">{c.thinking}</p>
-        <p className="text-sm text-rice/55">{c.thinkingSub}</p>
+      <div className="flex flex-col items-center gap-4 py-20 text-center">
+        <div className="h-11 w-11 animate-spin rounded-full border-2 border-white/20 border-t-kueh" />
+        <p className="text-[17px] text-rice">{c.thinking}</p>
+        <p className="max-w-[16rem] text-[14.5px] text-teal-muted">{c.thinkingSub}</p>
       </div>
     );
 
+  const recording = stage === "recording";
+
   return (
-    <div className="flex flex-col items-center gap-6">
-      {stage === "recording" ? (
-        <>
-          <button
-            onClick={stop}
-            className="relative flex h-40 w-40 items-center justify-center rounded-full bg-kueh text-lg font-medium text-lacquer"
-          >
+    <div className="flex w-full flex-col items-center">
+      {/* Her, mid-story. A placeholder for the family's own photograph. */}
+      <span
+        aria-hidden
+        className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 text-[54px]"
+      >
+        👵
+      </span>
+
+      <p className="mt-7 px-4 text-center font-[family-name:var(--font-display)] text-[22px] leading-snug text-rice italic">
+        &ldquo;{c.askHerHow}&rdquo;
+      </p>
+      <p className="mt-3 text-center text-[15px] text-teal-muted">{c.askHerOneQuestion}</p>
+
+      {/* Live level, so she can see it is hearing her. */}
+      <div aria-hidden className="mt-9 flex h-16 items-center justify-center gap-[3px]">
+        {BARS.map((base, i) => {
+          // At rest it still reads as a waveform; a flat row of dots looks broken.
+          const height = recording
+            ? Math.max(6, Math.min(64, base * (0.35 + level * 2.6) * 64))
+            : Math.max(5, base * 16);
+          return (
             <span
-              aria-hidden
-              className="absolute inset-0 rounded-full bg-kueh/40"
-              style={{ transform: `scale(${1 + level * 0.35})`, transition: "transform 80ms" }}
+              key={i}
+              style={{ height, transition: "height 90ms linear" }}
+              className="w-[3px] rounded-full bg-kueh"
             />
-            <span className="relative">{c.done}</span>
-          </button>
-          <p className="font-mono text-sm text-rice/60">
-            {String(Math.floor(seconds / 60))}:{String(seconds % 60).padStart(2, "0")} · {c.listening}
-          </p>
-          <p className="text-center text-sm text-rice/50">
-            {c.letHerFinish}
-          </p>
-        </>
-      ) : (
-        <>
-          <button
-            onClick={start}
-            className="flex h-40 w-40 items-center justify-center rounded-full bg-kueh text-center text-lg leading-tight font-medium text-lacquer"
-          >
-            {c.startListening.split("\n").map((w, i) => (
-              <span key={i} className="block">
-                {w}
-              </span>
-            ))}
-          </button>
-          <p className="max-w-[18rem] text-center text-rice/60">
-            Ask her one thing, then let her talk. Any language — hers is fine.
-          </p>
-        </>
-      )}
+          );
+        })}
+      </div>
+
+      <button
+        onClick={recording ? stop : start}
+        aria-label={recording ? c.done : c.startListening.replace("\n", " ")}
+        className="mt-9 flex h-[84px] w-[84px] items-center justify-center rounded-full border-[6px] border-rice bg-kueh"
+      >
+        <span
+          aria-hidden
+          className={`bg-white transition-all ${recording ? "h-7 w-7 rounded-[6px]" : "h-0 w-0"}`}
+        />
+      </button>
+
+      <p className="mt-5 text-[15px] text-teal-muted">
+        {recording
+          ? `${c.tapToFinish} · ${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")}`
+          : c.justPressPlay}
+      </p>
 
       {error && (
-        <p className="rounded-xl bg-kueh/15 px-4 py-3 text-center text-sm text-rice/85">{error}</p>
+        <p className="mt-6 rounded-[14px] bg-white/10 px-4 py-3 text-center text-[14.5px] text-rice">
+          {error}
+        </p>
       )}
 
-      {stage !== "recording" && (
-        <div className="flex w-full flex-col items-center gap-4">
+      {!recording && (
+        <div className="mt-8 flex w-full flex-col items-center gap-4">
           {showLanguages ? (
             <div className="w-full">
-              <p className="mb-3 text-center text-sm text-rice/55">
-                {c.whichLanguage}
-              </p>
+              <p className="mb-3 text-center text-[14.5px] text-teal-muted">{c.whichLanguage}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SOURCE_LANGUAGES.map((l) => (
                   <button
@@ -213,24 +227,20 @@ export default function Recorder({
                       setSourceHint(l.id);
                       setShowLanguages(false);
                     }}
-                    className={`min-h-11 rounded-full px-4 py-2 text-sm transition ${
-                      sourceHint === l.id
-                        ? "bg-kueh text-lacquer"
-                        : "bg-jade/15 text-rice/75 hover:bg-jade/25"
+                    className={`min-h-11 rounded-full px-4 text-[14.5px] transition ${
+                      sourceHint === l.id ? "bg-kueh text-white" : "bg-white/10 text-rice/85"
                     }`}
                   >
                     {l.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-center text-xs text-rice/40">
-                {c.onlyAHint}
-              </p>
+              <p className="mt-3 text-center text-[13px] text-teal-muted">{c.onlyAHint}</p>
             </div>
           ) : (
             <button
               onClick={() => setShowLanguages(true)}
-              className="min-h-11 text-sm text-rice/55 underline underline-offset-4"
+              className="min-h-11 text-[14.5px] text-teal-muted underline underline-offset-4"
             >
               {sourceHint === "auto"
                 ? c.dialectPrompt
@@ -238,7 +248,7 @@ export default function Recorder({
             </button>
           )}
 
-          <label className="min-h-11 cursor-pointer pt-2 text-sm text-rice/55 underline underline-offset-4">
+          <label className="min-h-11 cursor-pointer pt-1 text-[14.5px] text-teal-muted underline underline-offset-4">
             {c.useExisting}
             <input type="file" accept="audio/*,video/webm" onChange={onFile} className="hidden" />
           </label>

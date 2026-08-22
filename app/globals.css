@@ -1,28 +1,40 @@
 @import "tailwindcss";
 
-/* Palette from Peranakan tilework and lacquered kitchen cabinets.
-   Deliberately not the default AI-app cream/serif/terracotta. */
+/* Foundations — design.md. Rice ground, lacquer type; the dark is kept for the
+   Record screen only, where she is the one holding the phone. */
 :root {
-  --lacquer: #0e3b3e; /* deep teal ground — the base, not white */
-  --jade: #3e8e7e; /* secondary surfaces */
-  --kueh-rose: #d96a8a; /* the accent */
-  --pandan: #7fa650; /* completion states */
-  --gold-leaf: #c9a227; /* used ONCE, on the memory-saved moment */
-  --rice: #fbf7ee; /* type and cards on dark ground */
+  --rice: #fbf7ee; /* app background, cards */
+  --lacquer: #163b3d; /* primary text, dark screens, nav icon bg */
+  --kueh-rose: #d96a8a; /* primary accent — CTAs, record button, active states */
+  --jade-tint: #eef3ed; /* soft green surface */
+  --rose-tint: #fdeef1; /* soft rose surface */
+  --sand-tint: #f2ede0; /* soft neutral surface, tips, active language pill */
+  --pandan: #7fa650; /* step-number badges, complete */
+  --gold-leaf: #c9a227; /* gap prompts and the memory-saved moment. Nothing else */
+  --border: #ece3d2; /* card borders */
+  --muted: #7c8a84; /* secondary text */
+  --muted-2: #a9b6b1; /* tertiary text, timestamps */
+  --teal-muted: #9fc2bd; /* helper text on the dark Record screen */
 
-  /* Chinese comes from the Google Fonts link in the layout, then falls back to the
+  /* Chinese comes from the stylesheet link in the layout, then falls back to the
      platform CJK face so 中文 survives an offline demo. */
   --font-sc: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Noto Sans CJK SC", sans-serif;
 }
 
 @theme inline {
+  --color-rice: var(--rice);
   --color-lacquer: var(--lacquer);
-  --color-jade: var(--jade);
   --color-kueh: var(--kueh-rose);
+  --color-jade-tint: var(--jade-tint);
+  --color-rose-tint: var(--rose-tint);
+  --color-sand: var(--sand-tint);
   --color-pandan: var(--pandan);
   --color-gold: var(--gold-leaf);
-  --color-rice: var(--rice);
+  --color-line: var(--border);
+  --color-muted: var(--muted);
+  --color-muted2: var(--muted-2);
+  --color-teal-muted: var(--teal-muted);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-body), var(--font-tamil), var(--font-sc), system-ui, sans-serif;
@@ -30,21 +42,33 @@
 }
 
 html {
-  background: var(--lacquer);
+  background: var(--rice);
 }
 
 body {
-  background: var(--lacquer);
-  color: var(--rice);
+  background: var(--rice);
+  color: var(--lacquer);
   font-family: var(--font-body), var(--font-tamil), var(--font-sc), system-ui, sans-serif;
-  /* 18px body minimum — the rubric is 40% usability. */
-  font-size: 18px;
-  line-height: 1.55;
+  /* Primary reading text is 16.5–17px; nothing drops below 12.5px. */
+  font-size: 16.5px;
+  line-height: 1.5;
   -webkit-text-size-adjust: 100%;
 }
 
-/* Every tap target is at least a thumb. */
+/* Every tap target is at least a thumb; primary actions are 56px+. */
 button,
 a[role="button"] {
-  min-height: 48px;
+  min-height: 44px;
+}
+
+/* Cards, per design.md: white on rice, hairline border, generous radius. */
+.card {
+  background: #ffffff;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+}
+
+/* Screens with the bottom nav clear it. */
+.with-nav {
+  padding-bottom: 140px;
 }

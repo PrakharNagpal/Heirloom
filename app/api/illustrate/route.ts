@@ -65,8 +65,8 @@ export async function POST(req: Request) {
             contents: `${scene}\n\n${STORYBOOK_STYLE}`,
             config: {
               responseModalities: ["IMAGE"],
-              // Square, always. Panels of different shapes in one book read as broken.
-              imageConfig: { aspectRatio: "1:1" },
+              // 3:2, always. Panels of different shapes in one book read as broken.
+              imageConfig: { aspectRatio: "3:2" },
             },
           });
           const parts = res.candidates?.[0]?.content?.parts ?? [];

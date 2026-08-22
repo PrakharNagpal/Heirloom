@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import HerVoice from "./HerVoice";
+import LessonHeader from "./LessonHeader";
 import { t } from "@/lib/ui-strings";
 import type { BranchingPayload, Lang } from "@/lib/types";
 
@@ -13,12 +14,14 @@ import type { BranchingPayload, Lang } from "@/lib/types";
  */
 export default function BranchingPlayer({
   payload,
+  memoryId,
   speaker,
   lang,
   activeIndex,
   onPlay,
 }: {
   payload: BranchingPayload;
+  memoryId: string;
   speaker: string;
   lang: Lang;
   activeIndex: number | null;
@@ -38,29 +41,29 @@ export default function BranchingPlayer({
 
   return (
     <div>
-      <header>
-        <h1 className="font-[family-name:var(--font-display)] text-[1.8rem] leading-tight">
-          {c.youAre} {speaker}.
-        </h1>
-        <p className="mt-3 text-rice/65">{payload.premise}</p>
-      </header>
+      <LessonHeader
+        backHref={`/memory/${memoryId}`}
+        backLabel={c.backToHerWords}
+        title={`${c.youAre} ${speaker}.`}
+        meta={payload.premise}
+      />
 
-      <section className="mt-8 rounded-2xl bg-jade/12 px-5 py-6">
-        <p className="text-[1.25rem] leading-relaxed text-rice">{node.text}</p>
-        <div className="mt-5">
+      <section className="card mt-6 px-4 py-5">
+        <p className="text-[17px] leading-relaxed">{node.text}</p>
+        <div className="mt-4">
           <HerVoice
             speaker={speaker}
             lang={lang}
+            variant="wide"
             playing={activeIndex === node.segmentIndex}
             onPlay={() => onPlay(node.segmentIndex)}
-            label={c.whereThisCameFrom}
           />
         </div>
       </section>
 
       {!ended ? (
         <div className="mt-7">
-          <p className="font-mono text-[11px] tracking-[0.18em] text-rice/40 uppercase">
+          <p className="text-[12.5px] font-semibold tracking-wide text-muted uppercase">
             {c.whatDoYouDo}
           </p>
           <div role="group" aria-label={c.yourChoices} className="mt-3 grid gap-3">
@@ -68,7 +71,7 @@ export default function BranchingPlayer({
               <button
                 key={i}
                 onClick={() => setPath((p) => [...p, c.nextId])}
-                className="min-h-12 rounded-2xl border border-jade/40 px-4 py-4 text-left text-rice transition hover:border-kueh hover:bg-jade/20"
+                className="card min-h-12 w-full px-4 py-3.5 text-left text-[16.5px] transition hover:border-kueh"
               >
                 {c.label}
               </button>
@@ -78,15 +81,15 @@ export default function BranchingPlayer({
       ) : (
         <div className="mt-7">
           <p
-            className={`rounded-2xl px-4 py-4 ${
-              isTrueEnding ? "bg-pandan/20 text-rice" : "bg-jade/12 text-rice/75"
+            className={`rounded-[16px] px-4 py-4 text-[16.5px] ${
+              isTrueEnding ? "bg-[#eef4e6] text-lacquer" : "bg-sand text-muted"
             }`}
           >
             {isTrueEnding ? c.actuallyDid : c.choseDifferently}
           </p>
           <button
             onClick={() => setPath([payload.nodes[0].id])}
-            className="mt-4 min-h-12 w-full rounded-full bg-kueh px-5 font-medium text-lacquer"
+            className="mt-4 min-h-12 w-full rounded-full bg-kueh px-5 font-semibold text-white"
           >
             {c.startOver}
           </button>
@@ -96,7 +99,7 @@ export default function BranchingPlayer({
       {path.length > 1 && !ended && (
         <button
           onClick={() => setPath((p) => p.slice(0, -1))}
-          className="mt-6 min-h-12 text-sm text-rice/45 underline underline-offset-4"
+          className="mt-5 min-h-11 text-[14.5px] text-muted underline underline-offset-4"
         >
           {c.undoChoice}
         </button>

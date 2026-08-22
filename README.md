@@ -174,6 +174,28 @@ npm run gate:freeze      # the offline test, against a production build
 
 `gate:generate` and `gate:players` call the model; the rest are free.
 
+## The design
+
+Rice ground, lacquer type, kueh-rose for anything you act on. The palette comes from
+Peranakan tilework and lacquered kitchen cabinets, and it is deliberately not the
+cream-and-terracotta every other AI demo arrives in. `design.md` is the spec.
+
+Three rules do most of the work:
+
+**One dark screen.** Everything is light except Record, which is full-bleed lacquer
+with the tab bar hidden and exactly one thing to press. That is the screen *she*
+holds; the rest of the app is for the grandchild.
+
+**Gold-leaf is never an accent.** It appears in three places and nowhere else: a gap
+prompt, an uncertain-word marker, and the moment her memory is kept. A colour used
+everywhere stops meaning anything, so the design gate fails if gold shows up on Home,
+Record or the transcript.
+
+**A tip and a gap prompt must not look alike.** The tip is her own aside on sand,
+in italic. The gap prompt is cream with a dashed gold border and a question mark,
+because it is a different kind of thing — a hole we refused to fill, not a note. The
+gate compares their computed styles rather than trusting that they look different.
+
 ## Stack
 
 Next.js App Router · TypeScript · Tailwind · `@google/genai` from route handlers only.

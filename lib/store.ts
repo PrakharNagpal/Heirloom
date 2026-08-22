@@ -199,6 +199,18 @@ export function saveLesson(lesson: Lesson) {
   }
 }
 
+/** How many lessons are ready to open for a memory, without waiting for anything. */
+export function SEED_LESSON_COUNT(memoryId: string): number {
+  const langs = new Set<string>();
+  for (const l of SEED_LESSONS) if (l.memoryId === memoryId) langs.add(l.format);
+  const stored = readLessons();
+  for (const k of Object.keys(stored)) {
+    const [id, format] = k.split("::");
+    if (id === memoryId) langs.add(format);
+  }
+  return langs.size;
+}
+
 // ---- language preference ---------------------------------------------------
 
 export function readLang(): string | null {

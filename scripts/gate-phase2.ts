@@ -34,7 +34,7 @@ async function main() {
   // ---- landing ----
   await page.goto(BASE, { waitUntil: "networkidle" });
   check(
-    await page.getByRole("link", { name: /record her story/i }).isVisible(),
+    await page.getByRole("link", { name: /record a new memory/i }).isVisible(),
     "Landing shows the record button as the obvious thing to press"
   );
   check(
@@ -130,7 +130,7 @@ async function main() {
     .getAttribute("aria-pressed");
   check(langAfter === "true", "Language choice survives a refresh");
   check(
-    (await page.locator("main").innerText()).includes("பின்செல்"),
+    (await page.locator("main").innerText()).includes("எல்லா நினைவுகளும்"),
     "The app's own words are in Tamil too, not just the transcript"
   );
   check(

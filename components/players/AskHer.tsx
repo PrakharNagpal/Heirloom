@@ -6,19 +6,22 @@ import type { Lang } from "@/lib/types";
 /**
  * A detail she never gave, shown as a question instead of a guess.
  *
- * This is the safety behaviour made visible: the app does not fill the hole, it
- * hands the hole back as a reason to talk to her. Dashed rather than solid, because
- * it is deliberately unfinished — and in kueh-rose, which throughout the app means
- * "you are needed here". Gold is spent once, on the memory being kept, and nowhere
- * else; a colour used twice stops meaning anything.
+ * Cream ground, dashed gold-leaf border, and a "?" — deliberately unlike the tip
+ * callout beside it, because it is a different kind of thing. Calm, not a warning:
+ * this is a permanent feature of an honest transcript, not an error state.
  */
 export default function AskHer({ question, lang = "en" }: { question: string; lang?: Lang }) {
   return (
-    <p className="mt-3 rounded-xl border border-dashed border-kueh/70 bg-kueh/8 px-4 py-3 text-[0.95rem] text-rice/90">
-      <span className="mr-2 font-mono text-[10px] tracking-[0.18em] text-kueh uppercase">
-        {t(lang).goAskHer}
+    <p className="mt-3 flex gap-2.5 rounded-[14px] border-[1.5px] border-dashed border-gold bg-[#fdfaf0] px-3.5 py-3 text-[15.5px] leading-snug">
+      <span aria-hidden className="shrink-0 text-[15px]">
+        ❓
       </span>
-      {question}
+      <span>
+        <span className="mr-1.5 text-[12.5px] font-semibold tracking-wide text-gold uppercase">
+          {t(lang).goAskHer}
+        </span>
+        {question}
+      </span>
     </p>
   );
 }

@@ -14,10 +14,10 @@ const results: [boolean, string][] = [];
 const check = (pass: boolean, label: string) => results.push([pass, label]);
 
 const TOKENS = {
-  lacquer: "rgb(14, 59, 62)",
+  rice: "rgb(251, 247, 238)",
+  lacquer: "rgb(22, 59, 61)",
   kueh: "rgb(217, 106, 138)",
   gold: "rgb(201, 162, 39)",
-  rice: "rgb(251, 247, 238)",
 };
 
 /** Every colour actually painted on the page, with what painted it. */
@@ -54,23 +54,30 @@ async function main() {
   // ---- tokens applied ----
   await page.goto(BASE, { waitUntil: "networkidle" });
   const bodyBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  check(bodyBg === TOKENS.lacquer, `Ground is lacquer, not default white (${bodyBg})`);
+  check(bodyBg === TOKENS.rice, `Ground is rice, not default white (${bodyBg})`);
 
+  const bodyText = await page.evaluate(() => getComputedStyle(document.body).color);
+  check(bodyText === TOKENS.lacquer, `Type is lacquer (${bodyText})`);
+
+  // design.md: primary reading text 16.5–17px, nothing below 12.5px.
   const bodySize = await page.evaluate(() => parseFloat(getComputedStyle(document.body).fontSize));
-  check(bodySize >= 18, `Body type is ${bodySize}px — 18px minimum`);
+  check(bodySize >= 16.5 && bodySize <= 17, `Reading text is ${bodySize}px (design.md: 16.5–17)`);
 
-  const tooSmall = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("p, li, button, a, span"))
+  const tiny = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("p, li, span, button, a"))
       .filter((el) => {
-        const s = getComputedStyle(el);
-        const size = parseFloat(s.fontSize);
-        const text = (el.textContent ?? "").trim();
-        // Labels and timecodes are allowed to be small; running prose is not.
-        return text.length > 40 && size < 15 && el.children.length === 0;
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        return (el.textContent ?? "").trim().length > 0 && el.children.length === 0 && size < 12.5;
       })
-      .map((el) => `${parseFloat(getComputedStyle(el).fontSize)}px: ${(el.textContent ?? "").slice(0, 30)}`)
+      .map((el) => `${parseFloat(getComputedStyle(el).fontSize)}px: ${(el.textContent ?? "").slice(0, 24)}`)
   );
-  check(tooSmall.length === 0, `No prose under 15px${tooSmall.length ? ` (${tooSmall[0]})` : ""}`);
+  check(tiny.length === 0, `Nothing below 12.5px${tiny.length ? ` (${tiny[0]})` : ""}`);
+
+  // The dark screen is hers, and only hers.
+  await page.goto(`${BASE}/record`, { waitUntil: "networkidle" });
+  const recordBg = await page.evaluate(() => getComputedStyle(document.querySelector("main")!).backgroundColor);
+  check(recordBg === TOKENS.lacquer, `Record is the one dark screen (${recordBg})`);
+  await page.goto(BASE, { waitUntil: "networkidle" });
 
   const usesDisplayFace = await page.evaluate(() => {
     const h1 = document.querySelector("h1");
@@ -81,24 +88,21 @@ async function main() {
   const kuehSomewhere = (await paintedColours(page)).some((p) => p.colour.includes("217, 106, 138"));
   check(kuehSomewhere, "Kueh-rose accent is present");
 
-  // ---- gold-leaf: exactly one place, and it is the memory-saved moment ----
+  // ---- gold-leaf: gap prompts, uncertain markers, and the kept moment. Nothing else ----
   const landingGold = await goldUsers(page);
   await page.goto(`${BASE}/memory/mem_seed`, { waitUntil: "networkidle" });
   await page.waitForTimeout(800);
   const memoryGold = await goldUsers(page);
   await page.goto(`${BASE}/record`, { waitUntil: "networkidle" });
   const recordGold = await goldUsers(page);
-
+  const everyday = [...landingGold, ...memoryGold, ...recordGold];
   check(
-    landingGold.length === 0 && memoryGold.length === 0 && recordGold.length === 0,
-    `Gold-leaf is unspent on the everyday screens${
-      [...landingGold, ...memoryGold, ...recordGold].length
-        ? ` — found on ${[...landingGold, ...memoryGold, ...recordGold].slice(0, 2).join(", ")}`
-        : ""
+    everyday.length === 0,
+    `Gold-leaf is never a general accent — unused on home, memory and record${
+      everyday.length ? ` (found on ${everyday.slice(0, 2).join(", ")})` : ""
     }`
   );
 
-  // The one place it is allowed: the moment her memory is kept.
   await page.goto(`${BASE}/kept-preview`, { waitUntil: "networkidle" }).catch(() => {});
   const keptGold = await goldUsers(page);
   check(keptGold.length > 0, `Gold-leaf IS spent on the memory-kept moment (${keptGold.length} elements)`);
@@ -109,7 +113,7 @@ async function main() {
   await page.goto(`${BASE}/lesson/mem_seed?format=cookalong`, { waitUntil: "domcontentloaded" });
   // Wait for real content, not for the absence of the loading line — at
   // domcontentloaded the loading line has not been painted yet either.
-  await page.getByText(/Step 1 of/).waitFor({ state: "visible", timeout: 180_000 });
+  await page.locator("ol li").first().waitFor({ state: "visible", timeout: 180_000 });
   await page.waitForTimeout(400);
   const gap = await page.evaluate(() => {
     const el = Array.from(document.querySelectorAll("p")).find((p) =>
@@ -173,8 +177,9 @@ async function main() {
   await page.goto(`${BASE}/memory/mem_uncertain`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
   const unc = await page.evaluate(() => {
-    const el = Array.from(document.querySelectorAll("span")).find((s) =>
-      (s.textContent ?? "").includes("伊讲个话我听无")
+    // The innermost span: an ancestor also contains this text and is styled plainly.
+    const el = Array.from(document.querySelectorAll("span")).find(
+      (s) => /tap to hear the word/i.test(s.textContent ?? "") && s.children.length === 0
     );
     if (!el) return null;
     const s = getComputedStyle(el);
@@ -182,14 +187,21 @@ async function main() {
     return {
       line: s.textDecorationLine,
       style: s.textDecorationStyle,
-      colour: s.textDecorationColor,
+      colour: s.color,
       tappable: !!btn,
-      hint: document.body.innerText.includes("not certain"),
+      hint: /tap to hear the word/i.test(document.body.innerText),
     };
   });
-  check(!!unc && unc.line.includes("underline") && unc.style === "dotted", `Uncertain word is dotted-underlined (${unc?.style})`);
+  check(
+    !!unc && unc.line.includes("underline") && unc.style === "dotted",
+    `Uncertain caption is dotted-underlined (${unc?.style})`
+  );
+  check(
+    !!unc && unc.colour.includes("201, 162, 39"),
+    `Uncertain caption is gold-leaf, as design.md specifies (${unc?.colour})`
+  );
   check(!!unc && unc.tappable, "Uncertain segment is tappable to hear her say it");
-  check(!!unc && unc.hint, "It says plainly that we are not certain, rather than hiding it");
+  check(!!unc && unc.hint, "It invites you to hear the word she used, rather than hiding the doubt");
 
   // ---- empty state ----
   await page.evaluate(() => window.localStorage.clear());
@@ -209,6 +221,19 @@ async function main() {
     for (const line of text.split("\n")) if (JARGON.test(line)) offenders.push(`${path}: ${line.trim().slice(0, 60)}`);
   }
   check(offenders.length === 0, `No jargon in the UI copy${offenders.length ? ` — ${offenders[0]}` : ""}`);
+
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const nav = (await page.evaluate(`(() => {
+    const el = document.querySelector('nav[aria-label="Main"] a[href="/record"] span');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const s = getComputedStyle(el);
+    return { w: Math.round(r.width), h: Math.round(r.height), bg: s.backgroundColor, border: s.borderTopWidth };
+  })()`)) as { w: number; h: number; bg: string; border: string } | null;
+  check(
+    !!nav && nav.w >= 58 && nav.w <= 66 && nav.bg === TOKENS.kueh,
+    `Record sits raised in the tab bar as a ${nav?.w}px rose circle`
+  );
 
   check(errors.length === 0, `No page errors${errors.length ? `: ${errors[0].slice(0, 80)}` : ""}`);
 

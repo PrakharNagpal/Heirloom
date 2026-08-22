@@ -14,7 +14,7 @@
  *  - the API: never cached. A stale lesson is fine from localStorage; a stale
  *    response pretending to be fresh is not.
  */
-const VERSION = "heirloom-v2";
+const VERSION = "heirloom-v3";
 const PRECACHE = [
   "/",
   "/record",
@@ -22,6 +22,7 @@ const PRECACHE = [
   // One lesson URL, so the /lesson/[id] shell exists offline for every format.
   "/lesson/mem_seed?format=cookalong",
   "/synthetic-test.wav",
+  "/hero-telling.webp",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",

@@ -11,6 +11,29 @@ import type { Lang, LessonFormat } from "./types";
 
 type Copy = {
   // landing
+  // shell
+  navHome: string;
+  navRecord: string;
+  navStories: string;
+  greeting: string;
+  familyStories: string;
+  memoryFrom: string;
+  memoriesFrom: string;
+  recordNewMemory: string;
+  justPressPlay: string;
+  savedMemories: string;
+  lessonsReady: string;
+  allMemories: string;
+  recordedToday: string;
+  makeItALesson: string;
+  tapToHearHer: string;
+  stepByStep: string;
+  serves: string;
+  tapToHearMeta: string;
+  panelsMeta: string;
+  whenToUseIt: string;
+  askHerOneQuestion: string;
+  tapToFinish: string;
   tagline: string;
   blurb: string;
   record: string;
@@ -87,6 +110,28 @@ type Copy = {
 };
 
 const en: Copy = {
+  navHome: "Home",
+  navRecord: "Record",
+  navStories: "Stories",
+  greeting: "Good morning",
+  familyStories: "Your family's stories",
+  memoryFrom: "memory from",
+  memoriesFrom: "memories from",
+  recordNewMemory: "Record a new memory",
+  justPressPlay: "Just press play and let her talk",
+  savedMemories: "Saved memories",
+  lessonsReady: "lessons ready",
+  allMemories: "All memories",
+  recordedToday: "Recorded today",
+  makeItALesson: "Make it a lesson",
+  tapToHearHer: "tap 🔊 to hear her",
+  stepByStep: "step by step",
+  serves: "serves",
+  tapToHearMeta: "Cook-along",
+  panelsMeta: "6 panels · illustrated · for the youngest grandchild",
+  whenToUseIt: "When to use it:",
+  askHerOneQuestion: "Ask her one question. Let her talk.",
+  tapToFinish: "Tap to finish",
   tagline: "Your grandmother knows something you don't.",
   blurb:
     "She talks. You get something you can actually follow — her recipe, her words, the choice she made. In her voice, in your language.",
@@ -112,7 +157,7 @@ const en: Copy = {
   seeWhatSheSaid: "See what she said",
   tapToHear: "tap to hear her",
   playing: "playing",
-  notCertain: "We're not certain of a word here. Tap to hear her say it.",
+  notCertain: "tap to hear the word Ah Ma used",
   nowMakeSomething: "Now make something of it.",
   pickHow: "Pick how you want to learn this.",
   notYet: "not yet",
@@ -162,6 +207,28 @@ const en: Copy = {
 };
 
 const zh: Copy = {
+  navHome: "主页",
+  navRecord: "录音",
+  navStories: "故事",
+  greeting: "早安",
+  familyStories: "你家的故事",
+  memoryFrom: "段回忆，来自",
+  memoriesFrom: "段回忆，来自",
+  recordNewMemory: "录一段新的回忆",
+  justPressPlay: "按一下，让她慢慢讲",
+  savedMemories: "收好的回忆",
+  lessonsReady: "个学法准备好了",
+  allMemories: "所有回忆",
+  recordedToday: "今天录的",
+  makeItALesson: "做成一堂课",
+  tapToHearHer: "点 🔊 听她说",
+  stepByStep: "一步一步来",
+  serves: "份量",
+  tapToHearMeta: "跟着做",
+  panelsMeta: "六页 · 手绘 · 给最小的孙子",
+  whenToUseIt: "什么时候用：",
+  askHerOneQuestion: "问她一个问题，让她慢慢讲。",
+  tapToFinish: "点一下结束",
   tagline: "你的阿嬷懂一些你不懂的事。",
   blurb: "她讲，你就能真的跟着做——她的食谱、她的话、她当年的决定。用她的声音，用你的语言。",
   record: "录下她的故事",
@@ -185,7 +252,7 @@ const zh: Copy = {
   seeWhatSheSaid: "看看她说了什么",
   tapToHear: "点一下听她说",
   playing: "播放中",
-  notCertain: "这里有个词我们不太确定。点一下听她怎么说。",
+  notCertain: "点一下，听阿嬷用的那个词",
   nowMakeSomething: "现在把它做成点什么。",
   pickHow: "选一个你想学的方式。",
   notYet: "还没做",
@@ -235,6 +302,28 @@ const zh: Copy = {
 };
 
 const ms: Copy = {
+  navHome: "Utama",
+  navRecord: "Rakam",
+  navStories: "Cerita",
+  greeting: "Selamat pagi",
+  familyStories: "Cerita keluarga anda",
+  memoryFrom: "memori daripada",
+  memoriesFrom: "memori daripada",
+  recordNewMemory: "Rakam memori baharu",
+  justPressPlay: "Tekan main dan biar dia bercerita",
+  savedMemories: "Memori tersimpan",
+  lessonsReady: "pelajaran sedia",
+  allMemories: "Semua memori",
+  recordedToday: "Dirakam hari ini",
+  makeItALesson: "Jadikan ia pelajaran",
+  tapToHearHer: "ketik 🔊 untuk dengar dia",
+  stepByStep: "langkah demi langkah",
+  serves: "untuk",
+  tapToHearMeta: "Masak bersama",
+  panelsMeta: "6 halaman · berilustrasi · untuk cucu termuda",
+  whenToUseIt: "Bila hendak guna:",
+  askHerOneQuestion: "Tanya dia satu soalan. Biar dia bercakap.",
+  tapToFinish: "Ketik untuk selesai",
   tagline: "Nenek anda tahu sesuatu yang anda tidak tahu.",
   blurb:
     "Dia bercerita. Anda dapat sesuatu yang boleh diikut — resipinya, kata-katanya, pilihan yang dibuatnya. Dengan suaranya, dalam bahasa anda.",
@@ -260,7 +349,7 @@ const ms: Copy = {
   seeWhatSheSaid: "Lihat apa yang dia kata",
   tapToHear: "ketik untuk dengar dia",
   playing: "sedang main",
-  notCertain: "Kami tidak pasti satu perkataan di sini. Ketik untuk dengar dia menyebutnya.",
+  notCertain: "ketik untuk dengar perkataan yang Ah Ma guna",
   nowMakeSomething: "Sekarang jadikan ia sesuatu.",
   pickHow: "Pilih cara anda mahu belajar.",
   notYet: "belum ada",
@@ -310,6 +399,28 @@ const ms: Copy = {
 };
 
 const ta: Copy = {
+  navHome: "முகப்பு",
+  navRecord: "பதிவு",
+  navStories: "கதைகள்",
+  greeting: "காலை வணக்கம்",
+  familyStories: "உங்க குடும்பக் கதைகள்",
+  memoryFrom: "நினைவு —",
+  memoriesFrom: "நினைவுகள் —",
+  recordNewMemory: "புதிய நினைவைப் பதிவு செய்",
+  justPressPlay: "ஒரு தட்டு, அவங்க பேசட்டும்",
+  savedMemories: "சேமித்த நினைவுகள்",
+  lessonsReady: "பாடங்கள் தயார்",
+  allMemories: "எல்லா நினைவுகளும்",
+  recordedToday: "இன்று பதிவு செய்தது",
+  makeItALesson: "இதை ஒரு பாடமாக்கு",
+  tapToHearHer: "🔊 தட்டி அவங்க குரலைக் கேளுங்க",
+  stepByStep: "படிப்படியாக",
+  serves: "அளவு",
+  tapToHearMeta: "சேர்ந்து சமையுங்க",
+  panelsMeta: "6 பக்கங்கள் · ஓவியம் · சின்ன பேரக்குழந்தைக்கு",
+  whenToUseIt: "எப்போது சொல்வது:",
+  askHerOneQuestion: "ஒரு கேள்வி கேளுங்க. அவங்க பேசட்டும்.",
+  tapToFinish: "முடிக்கத் தட்டுங்க",
   tagline: "உங்கள் பாட்டிக்கு உங்களுக்குத் தெரியாத ஒன்று தெரியும்.",
   blurb:
     "அவங்க பேசுறாங்க. நீங்க உண்மையிலேயே பின்பற்றக்கூடிய ஒன்று கிடைக்கும் — அவங்க சமையல், அவங்க வார்த்தைகள், அவங்க எடுத்த முடிவு. அவங்க குரலில், உங்க மொழியில்.",
@@ -335,7 +446,7 @@ const ta: Copy = {
   seeWhatSheSaid: "அவங்க சொன்னதைப் பாருங்க",
   tapToHear: "அவங்க குரலைக் கேட்க தட்டுங்க",
   playing: "ஒலிக்கிறது",
-  notCertain: "இங்கே ஒரு வார்த்தை எங்களுக்கு உறுதியாகத் தெரியல. அவங்க சொல்றதைக் கேட்க தட்டுங்க.",
+  notCertain: "அஹ் மா சொன்ன வார்த்தையைக் கேட்க தட்டுங்க",
   nowMakeSomething: "இப்போ இதை ஒரு பொருளாக்குங்க.",
   pickHow: "எப்படிக் கத்துக்க விரும்புறீங்கன்னு தேர்ந்தெடுங்க.",
   notYet: "இன்னும் இல்லை",

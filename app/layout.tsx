@@ -2,11 +2,16 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Sans, Noto_Sans_Tamil, Noto_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import OfflineReady from "@/components/OfflineReady";
+import TabBar from "@/components/TabBar";
 
 // Display face. Used large and sparingly.
+// Italic 500 is used for her quoted speech and for tip callouts, so the italic
+// axis has to be loaded, not synthesised.
 const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -14,6 +19,7 @@ const fraunces = Fraunces({
 const notoSans = Noto_Sans({
   variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -45,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0E3B3E",
+  themeColor: "#FBF7EE",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -71,6 +77,7 @@ export default function RootLayout({
       >
         <OfflineReady />
         {children}
+        <TabBar />
       </body>
     </html>
   );
