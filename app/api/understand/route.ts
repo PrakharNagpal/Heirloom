@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { callWithFallback, gemini, UNDERSTAND_MODELS } from "@/lib/gemini";
-import { MEMORY_SCHEMA, UNDERSTAND_PROMPT } from "@/lib/prompts";
+import { MEMORY_SCHEMA, understandPrompt } from "@/lib/prompts";
+import { LANGUAGES, type Lang } from "@/lib/types";
 import { validateMemory } from "@/lib/validate";
 import { alignSegments, type Silence } from "@/lib/align";
 
@@ -29,6 +30,10 @@ export type UnderstandRequest = {
   audioUrl?: string;
   durationSec?: number;
   id?: string;
+  /** The one language to translate into now. The rest are filled in on demand. */
+  targetLanguage?: Lang;
+  /** What the family thinks she's speaking. A hint to the model, never a rule. */
+  sourceLanguageHint?: string;
   /**
    * Pauses the browser found in the decoded audio. Optional, but it is what makes
    * tap-a-line-hear-her real — see lib/align.ts for why the model's own
@@ -62,11 +67,16 @@ export async function POST(req: Request) {
 
   const mimeType = normaliseMime(body.mimeType ?? "audio/webm");
   const id = body.id ?? `mem_${Date.now().toString(36)}`;
+  const targetLanguage: Lang = LANGUAGES.includes(body.targetLanguage as Lang)
+    ? (body.targetLanguage as Lang)
+    : "en";
   const meta = {
     id,
     audioUrl: body.audioUrl ?? "",
     durationSec: Number(body.durationSec) > 0 ? Number(body.durationSec) : 0,
+    targetLanguage,
   };
+  const prompt = understandPrompt(targetLanguage, body.sourceLanguageHint);
 
   const ai = gemini();
 
@@ -79,7 +89,7 @@ export async function POST(req: Request) {
             role: "user",
             parts: [
               { inlineData: { mimeType, data: audioBase64 } },
-              { text: extra ? `${UNDERSTAND_PROMPT}\n\n${extra}` : UNDERSTAND_PROMPT },
+              { text: extra ? `${prompt}\n\n${extra}` : prompt },
             ],
           },
         ],
@@ -97,7 +107,7 @@ export async function POST(req: Request) {
     const correction =
       attempt === 0
         ? ""
-        : `Your previous answer was rejected: ${lastError}\nReturn the full object again, corrected. Every segment needs originalText, numeric startSec/endSec in seconds, and all four translations.`;
+        : `Your previous answer was rejected: ${lastError}\nReturn the full object again, corrected. Every segment needs originalText, numeric startSec/endSec in seconds, and a translation.`;
     try {
       const { text, model } = await callWithFallback(UNDERSTAND_MODELS, runOnce(correction));
       const parsed = JSON.parse(text);
@@ -120,7 +130,7 @@ export async function POST(req: Request) {
           `aligned by ${aligned.method} (max shift ${aligned.maxShiftSec}s) · ${issues.length} issues`
       );
       issues.forEach((i) => console.warn(`[understand] ${i}`));
-      return NextResponse.json({ memory, issues, model, elapsedMs, alignment: aligned.method, maxShiftSec: aligned.maxShiftSec });
+      return NextResponse.json({ memory, issues, model, elapsedMs, targetLanguage, alignment: aligned.method, maxShiftSec: aligned.maxShiftSec });
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
       console.warn(`[understand] attempt ${attempt + 1} failed: ${lastError}`);

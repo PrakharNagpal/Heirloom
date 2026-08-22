@@ -64,6 +64,15 @@ export async function saveMemory(entry: StoredMemory, audio: Blob | null) {
   writeIndex([entry, ...rest]);
 }
 
+/** Replace a stored memory in place — used when a language is filled in later. */
+export function updateMemory(memory: Memory) {
+  const items = readIndex();
+  const at = items.findIndex((m) => m.memory.id === memory.id);
+  if (at < 0) return; // the seed lives in code, not storage
+  items[at] = { ...items[at], memory };
+  writeIndex(items);
+}
+
 /** Removes the memory and its audio. Deletion has to actually delete. */
 export async function deleteMemory(id: string) {
   writeIndex(readIndex().filter((m) => m.memory.id !== id));

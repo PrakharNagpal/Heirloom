@@ -15,11 +15,11 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { config } from "dotenv";
 import { callWithFallback, credentialMode, gemini, UNDERSTAND_MODELS } from "../lib/gemini";
-import { MEMORY_SCHEMA, UNDERSTAND_PROMPT } from "../lib/prompts";
+import { MEMORY_SCHEMA, understandPrompt } from "../lib/prompts";
 import { validateMemory } from "../lib/validate";
 import { alignSegments, detectSilences, type Silence } from "../lib/align";
 import { decodeAiffOrWav } from "./decode-pcm";
-import { LANGUAGES, type Memory } from "../lib/types";
+import { LANGUAGE_LABELS, LANGUAGES, type Lang, type Memory } from "../lib/types";
 
 config({ path: ".env.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -69,7 +69,8 @@ function report(
   issues: string[],
   model: string,
   elapsedMs: number,
-  alignment: { method: string; maxShiftSec: number }
+  alignment: { method: string; maxShiftSec: number },
+  targetLanguage: Lang
 ) {
   const line = (label: string, value: string) =>
     console.log(`  ${label.padEnd(18)} ${value}`);
@@ -99,7 +100,7 @@ function report(
       `  ${C.dim(String(i).padStart(2))} ${C.dim(`${timecode(s.startSec)}–${timecode(s.endSec)}`)}${mark}`
     );
     console.log(`     ${s.originalText}`);
-    for (const l of LANGUAGES) console.log(`     ${C.dim(l)}  ${s.translations[l]}`);
+    console.log(`     ${C.dim(targetLanguage)}  ${s.translations[targetLanguage] ?? ""}`);
     console.log("");
   });
 
@@ -115,14 +116,18 @@ function report(
     memory.segments.length >= 5,
     `${memory.segments.length} segments — a 90s recording should give 10–25`,
   ]);
-  const emptyLang = LANGUAGES.filter((l) =>
-    memory.segments.some((s) => !s.translations[l]?.trim())
-  );
-  checks.push([emptyLang.length === 0, `All four languages populated${emptyLang.length ? ` (missing: ${emptyLang.join(", ")})` : ""}`]);
-  const echoed = LANGUAGES.filter(
-    (l) => l !== "en" && memory.segments.every((s) => s.translations[l] === s.translations.en)
-  );
-  checks.push([echoed.length === 0, `No language is silently English${echoed.length ? ` (${echoed.join(", ")} is)` : ""}`]);
+  const blank = memory.segments.filter((s) => !s.translations[targetLanguage]?.trim()).length;
+  checks.push([
+    blank === 0,
+    `Every segment translated into ${LANGUAGE_LABELS[targetLanguage]}${blank ? ` (${blank} blank)` : ""}`,
+  ]);
+  const untouched = memory.segments.filter(
+    (s) => s.translations[targetLanguage] === s.originalText
+  ).length;
+  checks.push([
+    untouched < memory.segments.length / 2,
+    `Translations differ from her original${untouched ? ` (${untouched} identical)` : ""}`,
+  ]);
   const monotonic = memory.segments.every(
     (s, i) => i === 0 || s.startSec >= memory.segments[i - 1].startSec
   );
@@ -161,7 +166,7 @@ function writeSpotCheck(memory: Memory, audioFile: string) {
       (s, i) => `<button data-s="${s.startSec}" data-e="${s.endSec}">
       <span class="t">${timecode(s.startSec)}–${timecode(s.endSec)}</span>
       <span class="o${s.uncertain ? " unsure" : ""}">${escapeHtml(s.originalText)}</span>
-      <span class="tr">${escapeHtml(s.translations.en)}</span>
+      <span class="tr">${escapeHtml(Object.values(s.translations)[0] ?? "")}</span>
     </button>`
     )
     .join("\n");
@@ -198,6 +203,12 @@ const escapeHtml = (s: string) =>
 async function main() {
   if (process.argv.includes("--models")) return listModels();
 
+  const targetLanguage = ((process.env.TARGET_LANG ?? "en").trim() as Lang);
+  if (!LANGUAGES.includes(targetLanguage)) {
+    console.error(C.bad(`TARGET_LANG must be one of ${LANGUAGES.join(", ")}.`));
+    process.exit(1);
+  }
+  const sourceHint = process.env.SOURCE_HINT ?? "auto";
   const arg = process.argv.slice(2).find((a) => !a.startsWith("--"));
   const path = resolve(arg ?? "public/demo.webm");
   if (!existsSync(path)) {
@@ -251,7 +262,7 @@ async function main() {
             role: "user",
             parts: [
               { inlineData: { mimeType, data: buf.toString("base64") } },
-              { text: UNDERSTAND_PROMPT },
+              { text: understandPrompt(targetLanguage, sourceHint) },
             ],
           },
         ],
@@ -269,13 +280,14 @@ async function main() {
     id: "mem_demo",
     audioUrl: `/${basename(path)}`,
     durationSec,
+    targetLanguage,
   });
 
   const alignment = alignSegments(memory.segments, { durationSec, silences });
   memory.segments = alignment.segments;
 
   writeFileSync("understand-output.json", JSON.stringify(memory, null, 2));
-  report(memory, issues, model, elapsedMs, alignment);
+  report(memory, issues, model, elapsedMs, alignment, targetLanguage);
   console.log(C.dim(`  Full JSON → understand-output.json`));
   writeSpotCheck(memory, path);
   console.log("");

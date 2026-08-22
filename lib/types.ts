@@ -25,7 +25,13 @@ export type Segment = {
   endSec: number;
   originalText: string; // her words, her language
   uncertain?: boolean; // dialect word Gemini isn't sure of
-  translations: Record<string, string>; // en, zh, ms, ta
+  /**
+   * Keyed by language code, and deliberately PARTIAL. She speaks once; the first
+   * pass translates into one language only, and the rest are filled in by
+   * /api/translate the first time somebody actually switches to them. Translating
+   * into four languages nobody reads is most of the output tokens on the call.
+   */
+  translations: Partial<Record<Lang, string>>;
 };
 
 export type SuggestedFormat = {
@@ -50,6 +56,8 @@ export type Memory = {
   skills: string[]; // "making kaya", "haggling"
   emotionalCore: string; // one sentence: what it's really about
   suggestedFormats: SuggestedFormat[];
+  /** Translations of the title, filled in alongside the segments. */
+  titleTranslations: Partial<Record<Lang, string>>;
 };
 
 export type Lesson = {
@@ -101,3 +109,27 @@ export const FORMAT_LABELS: Record<LessonFormat, string> = {
 
 // The three we ship. The rest render as honest greyed-out cards.
 export const SHIPPED_FORMATS: LessonFormat[] = ["cookalong", "branching", "phrasecoach"];
+
+/**
+ * What she might be speaking. This is a hint we pass to Gemini, never a
+ * restriction — she is free to code-switch mid-sentence and usually will.
+ * "auto" is the default so the one-button screen stays one button.
+ */
+export const SOURCE_LANGUAGES = [
+  { id: "auto", label: "She'll just talk" },
+  { id: "Teochew (潮州话)", label: "Teochew · 潮州话" },
+  { id: "Hokkien (福建话)", label: "Hokkien · 福建话" },
+  { id: "Cantonese (广东话)", label: "Cantonese · 广东话" },
+  { id: "Hakka (客家话)", label: "Hakka · 客家话" },
+  { id: "Mandarin (华语)", label: "Mandarin · 华语" },
+  { id: "Malay (Bahasa Melayu)", label: "Melayu" },
+  { id: "Tamil (தமிழ்)", label: "தமிழ்" },
+  { id: "Malayalam (മലയാളം)", label: "മലയാളം" },
+  { id: "English", label: "English" },
+] as const;
+
+/** Which languages this memory already has, so the switcher knows what costs a call. */
+export function availableLanguages(segments: Segment[]): Lang[] {
+  if (segments.length === 0) return [];
+  return LANGUAGES.filter((l) => segments.every((s) => Boolean(s.translations[l]?.trim())));
+}

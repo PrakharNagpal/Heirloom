@@ -24,6 +24,7 @@ export const SEED_MEMORY: StoredMemory = {
     "speakerName": "Ah Ma",
     "title": "阿妈教我做咖椰",
     "titleTranslated": "Ah Ma Teaching Me How to Make Kaya",
+  "titleTranslations": {"en": "Ah Ma Teaching Me How to Make Kaya", "zh": "阿妈教我做咖椰", "ms": "Ah Ma Ajar Saya Buat Kaya", "ta": "ஆமா எனக்கு காயா செய்யக் கத்துக் கொடுத்தாங்க"},
     "segments": [
       {
         "startSec": 0,

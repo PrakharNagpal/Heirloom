@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { blobToBase64, measureAudio, pickRecorderMime } from "@/lib/audio";
-import { saveMemory } from "@/lib/store";
-import type { Memory } from "@/lib/types";
+import { readLang, saveMemory } from "@/lib/store";
+import { LANGUAGES, SOURCE_LANGUAGES, type Lang, type Memory } from "@/lib/types";
 
 type Stage = "idle" | "recording" | "thinking" | "error";
 
@@ -15,6 +15,10 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
   const [seconds, setSeconds] = useState(0);
   const [level, setLevel] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // A hint to the model about what she is speaking. Default is "she'll just talk",
+  // so her screen stays one button; naming a dialect only sharpens the transcript.
+  const [sourceHint, setSourceHint] = useState<string>("auto");
+  const [showLanguages, setShowLanguages] = useState(false);
 
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -97,6 +101,12 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
       // The browser is the only place the true duration and the real pauses exist.
       // Both go to the server, or the timeline can't be rebuilt — see lib/align.ts.
       const facts = await measureAudio(blob);
+      // Translate into the language this phone is already reading, and only that
+      // one. The others are filled in by /api/translate if anybody switches.
+      const saved = readLang();
+      const targetLanguage: Lang = (LANGUAGES as readonly string[]).includes(saved ?? "")
+        ? (saved as Lang)
+        : "en";
       const res = await fetch("/api/understand", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -105,6 +115,8 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
           mimeType: blob.type,
           durationSec: facts.durationSec,
           silences: facts.silences,
+          targetLanguage,
+          sourceLanguageHint: sourceHint,
         }),
       });
       const data = await res.json();
@@ -130,7 +142,7 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
         <div className="h-12 w-12 animate-spin rounded-full border-3 border-jade/30 border-t-kueh" />
         <p className="text-rice">Listening to her.</p>
         <p className="text-sm text-rice/55">
-          Working out what she said, and what it means in four languages. About half a minute.
+          Working out what she said, and what it means. About half a minute.
         </p>
       </div>
     );
@@ -178,10 +190,50 @@ export default function Recorder({ onSaved }: { onSaved: (memory: Memory) => voi
       )}
 
       {stage !== "recording" && (
-        <label className="cursor-pointer text-sm text-rice/55 underline underline-offset-4">
-          Or use a recording you already have
-          <input type="file" accept="audio/*,video/webm" onChange={onFile} className="hidden" />
-        </label>
+        <div className="flex w-full flex-col items-center gap-4">
+          {showLanguages ? (
+            <div className="w-full">
+              <p className="mb-3 text-center text-sm text-rice/55">
+                What is she most likely to speak?
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {SOURCE_LANGUAGES.map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => {
+                      setSourceHint(l.id);
+                      setShowLanguages(false);
+                    }}
+                    className={`min-h-11 rounded-full px-4 py-2 text-sm transition ${
+                      sourceHint === l.id
+                        ? "bg-kueh text-lacquer"
+                        : "bg-jade/15 text-rice/75 hover:bg-jade/25"
+                    }`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-center text-xs text-rice/40">
+                Only a hint. She can switch language mid-sentence and it still works.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLanguages(true)}
+              className="min-h-11 text-sm text-rice/55 underline underline-offset-4"
+            >
+              {sourceHint === "auto"
+                ? "She speaks a dialect? Tell us which"
+                : `Listening for ${SOURCE_LANGUAGES.find((l) => l.id === sourceHint)?.label}`}
+            </button>
+          )}
+
+          <label className="min-h-11 cursor-pointer pt-2 text-sm text-rice/55 underline underline-offset-4">
+            Or use a recording you already have
+            <input type="file" accept="audio/*,video/webm" onChange={onFile} className="hidden" />
+          </label>
+        </div>
       )}
     </div>
   );

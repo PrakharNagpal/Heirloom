@@ -12,10 +12,20 @@ import {
   deleteMemory,
   getMemory,
   readLang,
+  updateMemory,
   writeLang,
   type StoredMemory,
 } from "@/lib/store";
-import { FORMAT_LABELS, LANGUAGES, SHIPPED_FORMATS, type Lang, type LessonFormat } from "@/lib/types";
+import { addLanguage } from "@/lib/translate-client";
+import {
+  availableLanguages,
+  FORMAT_LABELS,
+  LANGUAGES,
+  LANGUAGE_LABELS,
+  SHIPPED_FORMATS,
+  type Lang,
+  type LessonFormat,
+} from "@/lib/types";
 
 export default function MemoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +37,8 @@ export default function MemoryPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [currentSec, setCurrentSec] = useState(0);
   const [seekRequest, setSeekRequest] = useState<{ sec: number; nonce: number } | null>(null);
+  const [translating, setTranslating] = useState<Lang | null>(null);
+  const [translateError, setTranslateError] = useState<string | null>(null);
 
   useEffect(() => {
     setEntry(getMemory(id));
@@ -50,10 +62,42 @@ export default function MemoryPage() {
     };
   }, [entry]);
 
-  const changeLang = useCallback((l: Lang) => {
-    setLang(l);
-    writeLang(l);
-  }, []);
+  const available = useMemo(
+    () => (entry ? availableLanguages(entry.memory.segments) : []),
+    [entry]
+  );
+
+  /**
+   * Switching to a language she was already translated into is instant and free.
+   * A new one costs exactly one text-only call, once — after that it is stored
+   * with the memory and switching back and forth spends nothing.
+   */
+  const changeLang = useCallback(
+    async (l: Lang) => {
+      if (!entry) return;
+      setTranslateError(null);
+      if (available.includes(l)) {
+        setLang(l);
+        writeLang(l);
+        return;
+      }
+      setTranslating(l);
+      try {
+        const memory = await addLanguage(entry.memory, l);
+        updateMemory(memory);
+        setEntry({ ...entry, memory });
+        setLang(l);
+        writeLang(l);
+      } catch (e) {
+        setTranslateError(
+          e instanceof Error ? e.message : "That language didn't come through."
+        );
+      } finally {
+        setTranslating(null);
+      }
+    },
+    [entry, available]
+  );
 
   const suggested = useMemo(() => {
     if (!entry) return [];
@@ -76,6 +120,8 @@ export default function MemoryPage() {
 
   const { memory, peaks } = entry;
   const activeRange = activeIndex === null ? null : memory.segments[activeIndex];
+  // Falls back to English, then to her own words — never to a blank screen.
+  const shown: Lang = available.includes(lang) ? lang : (available[0] ?? "en");
 
   return (
     <Shell>
@@ -86,11 +132,12 @@ export default function MemoryPage() {
           {memory.speakerName} · {memory.sourceLanguage}
         </p>
         <h1 className="mt-3 font-[family-name:var(--font-display)] text-[2rem] leading-[1.1]">
-          {lang === "en" ? memory.titleTranslated : memory.title}
+          {memory.title}
         </h1>
-        {memory.emotionalCore && (
-          <p className="mt-3 text-rice/60">{memory.emotionalCore}</p>
-        )}
+        <p className="mt-1 text-rice/50">
+          {memory.titleTranslations?.[shown] ?? memory.titleTranslated}
+        </p>
+        {memory.emotionalCore && <p className="mt-3 text-rice/60">{memory.emotionalCore}</p>}
       </header>
 
       {/* The voice spine. Her audio is the thread; everything else hangs off it. */}
@@ -103,14 +150,25 @@ export default function MemoryPage() {
           onSeek={(sec) => setSeekRequest({ sec, nonce: Date.now() })}
         />
         <div className="mt-3">
-          <LanguageSwitcher lang={lang} onChange={changeLang} />
+          <LanguageSwitcher
+            lang={shown}
+            available={available}
+            loading={translating}
+            onChange={(l) => void changeLang(l)}
+          />
         </div>
+        {translating && (
+          <p className="mt-2 text-xs text-rice/50">
+            Putting her words into {LANGUAGE_LABELS[translating]}. Once only &mdash; it stays.
+          </p>
+        )}
+        {translateError && <p className="mt-2 text-xs text-kueh">{translateError}</p>}
       </div>
 
       <section className="mt-6">
         <TranscriptSpine
           segments={memory.segments}
-          lang={lang}
+          lang={shown}
           audioUrl={audioUrl}
           activeIndex={activeIndex}
           onActiveIndexChange={setActiveIndex}

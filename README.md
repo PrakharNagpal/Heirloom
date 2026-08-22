@@ -64,6 +64,21 @@ scaled to the real file duration, then snap each boundary to the nearest real pa
 this, because its true boundaries are known to the millisecond. It is a test fixture,
 never demo content — the demo uses a real person.
 
+## Languages: she picks one, they pick one
+
+She is never asked to be multilingual — she just talks, in whatever she speaks, and
+can name a dialect on the record screen if she wants the transcript sharper. That is
+a hint to the model, not a restriction: she can code-switch mid-sentence and usually
+does.
+
+The grandchild picks their own language, and **only that one is produced.** The audio
+pass returns her words plus one translation. If somebody later switches to another
+language, `/api/translate` fills that one in — text-only, Flash tier, once per
+language per memory, then stored. Switching back and forth after that spends nothing.
+
+Translating into four languages up front was most of the output tokens on the audio
+call, and three quarters of it was never read.
+
 ## Safety
 
 - **No invented memories.** Where a lesson needs a detail she didn't give, it renders

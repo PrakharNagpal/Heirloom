@@ -1,4 +1,4 @@
-import { LANGUAGES, type Memory, type Segment, type SuggestedFormat, type LessonFormat } from "./types";
+import type { Lang, Memory, Segment, SuggestedFormat, LessonFormat } from "./types";
 
 const KNOWN_FORMATS: LessonFormat[] = [
   "cookalong",
@@ -33,7 +33,7 @@ const strArray = (v: unknown): string[] =>
  */
 export function validateMemory(
   raw: unknown,
-  meta: { id: string; audioUrl: string; durationSec: number }
+  meta: { id: string; audioUrl: string; durationSec: number; targetLanguage: Lang }
 ): ValidationResult {
   const issues: string[] = [];
   if (!raw || typeof raw !== "object") fail("Model returned no object.");
@@ -58,18 +58,11 @@ export function validateMemory(
     if (!Number.isFinite(startSec) || !Number.isFinite(endSec))
       fail(`Segment ${i} has non-numeric timestamps (${seg.startSec}–${seg.endSec}).`);
 
-    const t = (seg.translations ?? {}) as Record<string, unknown>;
-    const translations: Record<string, string> = {};
-    for (const lang of LANGUAGES) {
-      const value = str(t[lang]);
-      if (!value) fail(`Segment ${i} is missing the "${lang}" translation.`);
-      translations[lang] = value;
-    }
-    // "None silently English" — flag, don't fail: a proper noun can legitimately match.
-    for (const lang of LANGUAGES) {
-      if (lang !== "en" && translations[lang] === translations.en)
-        issues.push(`Segment ${i}: "${lang}" is identical to English — check it isn't untranslated.`);
-    }
+    // One language per pass now; the rest arrive via /api/translate on demand.
+    const translated = str(seg.translation);
+    if (!translated)
+      fail(`Segment ${i} came back with no ${meta.targetLanguage} translation.`);
+    const translations: Segment["translations"] = { [meta.targetLanguage]: translated };
 
     const clampedStart = Math.max(0, startSec);
     const clampedEnd = Math.max(clampedStart + 0.2, endSec);
@@ -122,6 +115,7 @@ export function validateMemory(
       speakerName,
       title,
       titleTranslated: str(r.titleTranslated) || title,
+      titleTranslations: { [meta.targetLanguage]: str(r.titleTranslated) || title },
       segments,
       summary: str(r.summary),
       era: str(r.era) || null,
