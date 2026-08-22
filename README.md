@@ -22,10 +22,7 @@ original audio still attached under every line. Tap any sentence and hear her sa
 </tr>
 </table>
 
-Every screenshot here is the running app at 390px, shot off the two seeded memories
-by `npm run shots` — no mockups, and nothing in them calls the model.
-
-The build plan, spec and clock live in [HEIRLOOM.md](./HEIRLOOM.md).
+Every screenshot here is the running app at 390px. Real screens, not mockups.
 
 ## Why Gemini is essential, not decorative
 
@@ -158,7 +155,7 @@ says so on the page: *"Drawn, not photographed. These are pictures of her story,
 pictures of her."* That is an ethical line before it is an aesthetic one.
 
 The drawings do not depend on the reading language — the caption changes, the scene
-does not — so a panel is drawn once per memory and reused across all four. The seeded
+does not — so a panel is drawn once per memory and reused across all four. The demo
 memory's six pages ship in `/public/storybook/`, which is why the book opens in a
 tenth of a second and works with the network off.
 
@@ -178,26 +175,17 @@ tenth of a second and works with the network off.
 - Heirloom makes **no inference about cognitive state, mood, or health** from her
   speech, and the prompt forbids it explicitly.
 
-## What ships in the box
-
-Two seeded memories, both the kaya story: one told in Mandarin, one in English with
-Singlish cadence, so the demo lands whether or not the room reads Chinese. Each comes
-with its transcript in four languages, sixteen pre-written lessons, and six
-illustrations. Thirty-two lessons and twelve drawings in total, none of which touch
-the model at runtime.
-
-Both are machine-generated recordings, clearly labelled as fixtures in `lib/seed.ts`.
-They prove the pipeline. They prove nothing about dialect, about the uncertainty
-flag, or about how a real grandmother's translations read — the demo needs a real
-person for that.
-
 ## It works with the network off
 
-The seeded memory, her audio, and all twelve of its lessons — three formats in four
+The demo memory, her audio, and all twelve of its lessons — three formats in four
 languages — ship inside the bundle. A service worker precaches the shell and the
 audio, so with the network disabled the app still reloads, renders the transcript,
 plays her voice, switches all four languages and opens every lesson. Nothing in the
 demo path calls the model at runtime.
+
+The demo recording is machine-generated, not a real grandmother. It proves the
+pipeline end to end; it proves nothing yet about dialect, about the uncertainty
+flag, or about how a real person's translations read.
 
 That is not polish. Venue wifi dies, and a demo that needs the network is a demo you
 might not get to give.
@@ -225,14 +213,6 @@ npm run gate:freeze      # the offline test, against a production build
 ```
 
 `gate:generate` and `gate:players` call the model; the rest are free.
-
-The screenshots in this README come off the same machinery, so they cannot drift
-from the app:
-
-```bash
-npm run dev
-npm run shots           # -> docs/screenshots/*.png, 390px, seeded memories only
-```
 
 ## The design
 
