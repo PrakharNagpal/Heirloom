@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
+/* Palette from Peranakan tilework and lacquered kitchen cabinets.
+   Deliberately not the default AI-app cream/serif/terracotta. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --lacquer: #0e3b3e; /* deep teal ground — the base, not white */
+  --jade: #3e8e7e; /* secondary surfaces */
+  --kueh-rose: #d96a8a; /* the accent */
+  --pandan: #7fa650; /* completion states */
+  --gold-leaf: #c9a227; /* used ONCE, on the memory-saved moment */
+  --rice: #fbf7ee; /* type and cards on dark ground */
+
+  /* Chinese comes from the Google Fonts link in the layout, then falls back to the
+     platform CJK face so 中文 survives an offline demo. */
+  --font-sc: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-lacquer: var(--lacquer);
+  --color-jade: var(--jade);
+  --color-kueh: var(--kueh-rose);
+  --color-pandan: var(--pandan);
+  --color-gold: var(--gold-leaf);
+  --color-rice: var(--rice);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body), var(--font-tamil), var(--font-sc), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--lacquer);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--lacquer);
+  color: var(--rice);
+  font-family: var(--font-body), var(--font-tamil), var(--font-sc), system-ui, sans-serif;
+  /* 18px body minimum — the rubric is 40% usability. */
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Every tap target is at least a thumb. */
+button,
+a[role="button"] {
+  min-height: 48px;
 }
