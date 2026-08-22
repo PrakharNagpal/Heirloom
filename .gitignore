@@ -42,3 +42,4 @@ next-env.d.ts
 !.env.example
 understand-output.json
 public/spot-check.html
+gate-*.png

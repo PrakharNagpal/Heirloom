@@ -60,7 +60,7 @@ said in each — and throw its numbers away. [`lib/align.ts`](./lib/align.ts) re
 the timeline from the audio itself: predict each segment's length from its text,
 scaled to the real file duration, then snap each boundary to the nearest real pause.
 
-`public/synthetic-test.aiff` is a machine-generated recording used only to measure
+`public/synthetic-test.wav` is a machine-generated recording used only to measure
 this, because its true boundaries are known to the millisecond. It is a test fixture,
 never demo content — the demo uses a real person.
 
