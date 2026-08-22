@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "@/components/Icon";
 import { t } from "@/lib/ui-strings";
 import type { Lang, Segment } from "@/lib/types";
 
@@ -48,11 +49,11 @@ export default function TranscriptSpine({
               >
                 <span
                   aria-hidden
-                  className={`mt-0.5 flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[13px] ${
+                  className={`mt-0.5 flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full ${
                     active ? "bg-kueh text-white" : "bg-lacquer text-rice"
                   }`}
                 >
-                  {active ? "❚❚" : "▶"}
+                  <Icon name={active ? "pause" : "play"} size={14} />
                 </span>
 
                 <span className="min-w-0 flex-1">

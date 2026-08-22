@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { blobToBase64, measureAudio, pickRecorderMime } from "@/lib/audio";
+import Avatar from "@/components/Avatar";
 import KeptMoment from "@/components/KeptMoment";
 import { saveMemory } from "@/lib/store";
 import { t } from "@/lib/ui-strings";
@@ -151,9 +152,9 @@ export default function Recorder({
   if (stage === "thinking")
     return (
       <div className="flex flex-col items-center gap-4 py-20 text-center">
-        <div className="h-11 w-11 animate-spin rounded-full border-2 border-white/20 border-t-kueh" />
-        <p className="text-[17px] text-rice">{c.thinking}</p>
-        <p className="max-w-[16rem] text-[14.5px] text-teal-muted">{c.thinkingSub}</p>
+        <div className="h-11 w-11 animate-spin rounded-full border-2 border-line border-t-kueh" />
+        <p className="text-[17px]">{c.thinking}</p>
+        <p className="max-w-[17rem] text-[14.5px] text-muted">{c.thinkingSub}</p>
       </div>
     );
 
@@ -162,17 +163,12 @@ export default function Recorder({
   return (
     <div className="flex w-full flex-col items-center">
       {/* Her, mid-story. A placeholder for the family's own photograph. */}
-      <span
-        aria-hidden
-        className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 text-[54px]"
-      >
-        👵
-      </span>
+      <Avatar seed="recording" size={128} />
 
-      <p className="mt-7 px-4 text-center font-[family-name:var(--font-display)] text-[22px] leading-snug text-rice italic">
+      <p className="mt-7 px-2 text-center font-[family-name:var(--font-display)] text-[22px] leading-snug italic">
         &ldquo;{c.askHerHow}&rdquo;
       </p>
-      <p className="mt-3 text-center text-[15px] text-teal-muted">{c.askHerOneQuestion}</p>
+      <p className="mt-3 text-center text-[15px] text-muted">{c.askHerOneQuestion}</p>
 
       {/* Live level, so she can see it is hearing her. */}
       <div aria-hidden className="mt-9 flex h-16 items-center justify-center gap-[3px]">
@@ -185,7 +181,7 @@ export default function Recorder({
             <span
               key={i}
               style={{ height, transition: "height 90ms linear" }}
-              className="w-[3px] rounded-full bg-kueh"
+              className={`w-[3px] rounded-full ${recording ? "bg-kueh" : "bg-kueh/35"}`}
             />
           );
         })}
@@ -194,7 +190,7 @@ export default function Recorder({
       <button
         onClick={recording ? stop : start}
         aria-label={recording ? c.done : c.startListening.replace("\n", " ")}
-        className="mt-9 flex h-[84px] w-[84px] items-center justify-center rounded-full border-[6px] border-rice bg-kueh"
+        className="mt-9 flex h-[84px] w-[84px] items-center justify-center rounded-full border-[6px] border-white bg-kueh shadow-[0_10px_28px_rgba(217,106,138,0.35)]"
       >
         <span
           aria-hidden
@@ -202,14 +198,14 @@ export default function Recorder({
         />
       </button>
 
-      <p className="mt-5 text-[15px] text-teal-muted">
+      <p className="mt-5 text-[15px] text-muted">
         {recording
           ? `${c.tapToFinish} · ${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")}`
           : c.justPressPlay}
       </p>
 
       {error && (
-        <p className="mt-6 rounded-[14px] bg-white/10 px-4 py-3 text-center text-[14.5px] text-rice">
+        <p className="mt-6 rounded-[14px] bg-rose-tint px-4 py-3 text-center text-[14.5px]">
           {error}
         </p>
       )}
@@ -218,7 +214,7 @@ export default function Recorder({
         <div className="mt-8 flex w-full flex-col items-center gap-4">
           {showLanguages ? (
             <div className="w-full">
-              <p className="mb-3 text-center text-[14.5px] text-teal-muted">{c.whichLanguage}</p>
+              <p className="mb-3 text-center text-[14.5px] text-muted">{c.whichLanguage}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SOURCE_LANGUAGES.map((l) => (
                   <button
@@ -228,19 +224,19 @@ export default function Recorder({
                       setShowLanguages(false);
                     }}
                     className={`min-h-11 rounded-full px-4 text-[14.5px] transition ${
-                      sourceHint === l.id ? "bg-kueh text-white" : "bg-white/10 text-rice/85"
+                      sourceHint === l.id ? "bg-kueh text-white" : "bg-sand text-muted"
                     }`}
                   >
                     {l.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-center text-[13px] text-teal-muted">{c.onlyAHint}</p>
+              <p className="mt-3 text-center text-[13px] text-muted2">{c.onlyAHint}</p>
             </div>
           ) : (
             <button
               onClick={() => setShowLanguages(true)}
-              className="min-h-11 text-[14.5px] text-teal-muted underline underline-offset-4"
+              className="min-h-11 text-[14.5px] text-muted underline underline-offset-4"
             >
               {sourceHint === "auto"
                 ? c.dialectPrompt
@@ -248,7 +244,7 @@ export default function Recorder({
             </button>
           )}
 
-          <label className="min-h-11 cursor-pointer pt-1 text-[14.5px] text-teal-muted underline underline-offset-4">
+          <label className="min-h-11 cursor-pointer pt-1 text-[14.5px] text-muted underline underline-offset-4">
             {c.useExisting}
             <input type="file" accept="audio/*,video/webm" onChange={onFile} className="hidden" />
           </label>

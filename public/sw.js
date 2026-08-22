@@ -14,20 +14,29 @@
  *  - the API: never cached. A stale lesson is fine from localStorage; a stale
  *    response pretending to be fresh is not.
  */
-const VERSION = "heirloom-v3";
+const VERSION = "heirloom-v6";
 const PRECACHE = [
   "/",
   "/record",
   "/memory/mem_seed",
+  "/memory/mem_seed_en",
   // One lesson URL, so the /lesson/[id] shell exists offline for every format.
   "/lesson/mem_seed?format=cookalong",
   "/synthetic-test.wav",
+  "/synthetic-en.wav",
   "/hero-telling.webp",
+  // Emoji ship as SVG files, so they have to be cached like any other asset.
+  ...["home", "mic", "book", "grandma", "bowl", "speech", "shuffle", "bulb", "question", "speaker"].map(
+    (n) => `/emoji/${n}.svg`
+  ),
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
-  // The storybook's six pages, so the picture book works with the network off too.
-  ...Array.from({ length: 6 }, (_, i) => `/storybook/panel-${i + 1}.webp`),
+  // Every storybook page of every seeded memory, so the picture books work with
+  // the network off too.
+  ...["mem_seed", "mem_seed_en"].flatMap((id) =>
+    Array.from({ length: 6 }, (_, i) => `/storybook/${id}/panel-${i + 1}.webp`)
+  ),
 ];
 
 self.addEventListener("install", (event) => {
@@ -59,6 +68,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+
+  // React Server Component payloads are tied to the exact build that produced them.
+  // Serving a cached one to a newer runtime breaks React mid-stream, so they are
+  // never cached and never served from cache — offline, the cached HTML is enough.
+  if (url.searchParams.has("_rsc") || request.headers.get("RSC") === "1") return;
 
   if (request.mode === "navigate") {
     event.respondWith(

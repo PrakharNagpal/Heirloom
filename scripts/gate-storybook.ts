@@ -22,8 +22,11 @@ async function openBook(page: Page, lang?: string) {
 
 async function main() {
   // ---- payload checks, before any browser ----
-  const books = SEED_LESSONS.filter((l) => l.format === "storybook");
+  const MEM = "mem_seed";
+  const books = SEED_LESSONS.filter((l) => l.format === "storybook" && l.memoryId === MEM);
   check(books.length === 4, `Storybook ships in all four languages (${books.length})`);
+  const otherBooks = SEED_LESSONS.filter((l) => l.format === "storybook" && l.memoryId !== MEM);
+  check(otherBooks.length === 4, `The English memory ships its storybook too (${otherBooks.length})`);
   for (const b of books) {
     const p = b.payload as StorybookPayload;
     check(p.panels.length === 6, `${b.language}: six panels (${p.panels.length})`);
@@ -49,8 +52,8 @@ async function main() {
 
   await page.goto(`${BASE}/memory/mem_seed`, { waitUntil: "networkidle" });
   check(
-    (await page.getByText(/not yet/).count()) === 2,
-    "The storybook card is no longer greyed out (2 unbuilt formats remain)"
+    (await page.getByRole("link", { name: /Storybook/i }).count()) > 0,
+    "The storybook is a real card on the picker, not a placeholder"
   );
 
   const t0 = Date.now();
@@ -83,7 +86,7 @@ async function main() {
     const out = [];
     for (let i = 1; i <= 6; i++) {
       const img = new Image();
-      img.src = "/storybook/panel-" + i + ".webp";
+      img.src = "/storybook/mem_seed/panel-" + i + ".webp";
       try { await img.decode(); } catch (e) {}
       out.push(img.naturalWidth + "x" + img.naturalHeight);
     }

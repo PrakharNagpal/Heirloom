@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import KeptMoment from "@/components/KeptMoment";
-import { SEED_MEMORY } from "@/lib/seed";
+import { SEED_MEMORY_EN } from "@/lib/seed";
 import { useLang } from "@/lib/use-lang";
 
 /**
@@ -14,12 +14,12 @@ export default function KeptPreview() {
   const router = useRouter();
   const [lang] = useLang();
   return (
-    <main className="flex min-h-screen items-center bg-lacquer">
+    <main className="flex min-h-screen items-center">
       <div className="mx-auto w-full max-w-[430px] px-5">
         <KeptMoment
-          memory={SEED_MEMORY.memory}
+          memory={SEED_MEMORY_EN.memory}
           lang={lang}
-          onContinue={() => router.push(`/memory/${SEED_MEMORY.memory.id}`)}
+          onContinue={() => router.push(`/memory/${SEED_MEMORY_EN.memory.id}`)}
         />
       </div>
     </main>

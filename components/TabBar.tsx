@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Emoji, { type EmojiName } from "@/components/Emoji";
+import Icon from "@/components/Icon";
 import { usePathname } from "next/navigation";
 import { useLang } from "@/lib/use-lang";
 import { t } from "@/lib/ui-strings";
@@ -19,7 +21,10 @@ export default function TabBar() {
   if (pathname.startsWith("/record")) return null;
 
   const onHome = pathname === "/";
-  const onStories = pathname.startsWith("/memory") || pathname.startsWith("/lesson");
+  const onStories =
+    pathname.startsWith("/stories") ||
+    pathname.startsWith("/memory") ||
+    pathname.startsWith("/lesson");
 
   return (
     <nav
@@ -27,20 +32,22 @@ export default function TabBar() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[rgba(251,247,238,0.96)] backdrop-blur"
     >
       <div className="mx-auto flex max-w-[430px] items-end justify-around px-6 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
-        <Tab href="/" label={c.navHome} icon="🏠" active={onHome} />
+        <Tab href="/" label={c.navHome} icon="home" active={onHome} />
 
         <Link
           href="/record"
           aria-label={c.navRecord}
           className="-mt-[26px] flex flex-col items-center gap-1"
         >
-          <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full border-4 border-white bg-kueh text-[26px] shadow-[0_8px_20px_rgba(217,106,138,0.35)]">
-            🎙️
+          {/* White line mic, not the emoji: the emoji microphone is blue-grey and
+              fights the rose it sits on. Full-colour glyphs belong on light ground. */}
+          <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full border-4 border-white bg-kueh text-white shadow-[0_8px_20px_rgba(217,106,138,0.35)]">
+            <Icon name="mic" size={26} strokeWidth={1.9} />
           </span>
           <span className="text-[12.5px] font-bold text-kueh">{c.navRecord}</span>
         </Link>
 
-        <Tab href="/stories" label={c.navStories} icon="📖" active={onStories} />
+        <Tab href="/stories" label={c.navStories} icon="book" active={onStories} />
       </div>
     </nav>
   );
@@ -54,7 +61,7 @@ function Tab({
 }: {
   href: string;
   label: string;
-  icon: string;
+  icon: EmojiName;
   active: boolean;
 }) {
   return (
@@ -63,9 +70,7 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className="flex min-h-11 w-20 flex-col items-center gap-1 py-1"
     >
-      <span aria-hidden className="text-[22px] leading-none">
-        {icon}
-      </span>
+      <Emoji name={icon} size={22} className={active ? "" : "opacity-55"} />
       <span className={`text-[12.5px] ${active ? "font-semibold text-kueh" : "text-muted2"}`}>
         {label}
       </span>

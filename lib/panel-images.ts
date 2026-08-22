@@ -14,28 +14,18 @@
  * and Tamil, the scene does not, so one drawing serves all four.
  */
 
-const DB_NAME = "heirloom";
-const STORE = "panels";
-
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    // Bumped to 2 to add the panels store alongside the audio one.
-    const req = indexedDB.open(DB_NAME, 2);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains("audio")) db.createObjectStore("audio");
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
+import { PANEL_STORE as STORE, openDb } from "./idb";
 
 const key = (memoryId: string, panel: number) => `${memoryId}::${panel}`;
 
-/** Panels shipped in the repo for the seeded memory. */
+/** Memories whose panels are drawn ahead of time and shipped in the repo. */
+export const BAKED_PANEL_MEMORIES = ["mem_seed", "mem_seed_en"] as const;
+
+/** Panels shipped in the repo, per memory. */
 export function bakedPanelUrl(memoryId: string, panel: number): string | null {
-  return memoryId === "mem_seed" ? `/storybook/panel-${panel + 1}.webp` : null;
+  return (BAKED_PANEL_MEMORIES as readonly string[]).includes(memoryId)
+    ? `/storybook/${memoryId}/panel-${panel + 1}.webp`
+    : null;
 }
 
 async function readCached(memoryId: string, panel: number): Promise<Blob | null> {

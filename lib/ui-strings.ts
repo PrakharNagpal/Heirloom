@@ -22,6 +22,12 @@ type Copy = {
   recordNewMemory: string;
   justPressPlay: string;
   savedMemories: string;
+  everythingKept: string;
+  storiesBlurb: string;
+  seeAll: string;
+  nothingYet: string;
+  openIt: string;
+  ready: string;
   lessonsReady: string;
   allMemories: string;
   recordedToday: string;
@@ -110,6 +116,12 @@ type Copy = {
 };
 
 const en: Copy = {
+  everythingKept: "Everything she's told you",
+  storiesBlurb: "Every memory, and every way you can go through it.",
+  seeAll: "See all",
+  nothingYet: "Nothing here yet. Call your grandmother.",
+  openIt: "Open",
+  ready: "ready",
   navHome: "Home",
   navRecord: "Record",
   navStories: "Stories",
@@ -124,7 +136,7 @@ const en: Copy = {
   allMemories: "All memories",
   recordedToday: "Recorded today",
   makeItALesson: "Make it a lesson",
-  tapToHearHer: "tap 🔊 to hear her",
+  tapToHearHer: "tap the speaker to hear her",
   stepByStep: "step by step",
   serves: "serves",
   tapToHearMeta: "Cook-along",
@@ -207,6 +219,12 @@ const en: Copy = {
 };
 
 const zh: Copy = {
+  everythingKept: "她讲过的每一段",
+  storiesBlurb: "所有回忆，还有每一种学法。",
+  seeAll: "看全部",
+  nothingYet: "这里还什么都没有。打个电话给阿嬷吧。",
+  openIt: "打开",
+  ready: "已备好",
   navHome: "主页",
   navRecord: "录音",
   navStories: "故事",
@@ -221,7 +239,7 @@ const zh: Copy = {
   allMemories: "所有回忆",
   recordedToday: "今天录的",
   makeItALesson: "做成一堂课",
-  tapToHearHer: "点 🔊 听她说",
+  tapToHearHer: "点喇叭听她说",
   stepByStep: "一步一步来",
   serves: "份量",
   tapToHearMeta: "跟着做",
@@ -302,6 +320,12 @@ const zh: Copy = {
 };
 
 const ms: Copy = {
+  everythingKept: "Semua yang dia ceritakan",
+  storiesBlurb: "Setiap memori, dan setiap cara untuk melaluinya.",
+  seeAll: "Lihat semua",
+  nothingYet: "Belum ada apa-apa di sini. Telefon nenek anda.",
+  openIt: "Buka",
+  ready: "sedia",
   navHome: "Utama",
   navRecord: "Rakam",
   navStories: "Cerita",
@@ -316,7 +340,7 @@ const ms: Copy = {
   allMemories: "Semua memori",
   recordedToday: "Dirakam hari ini",
   makeItALesson: "Jadikan ia pelajaran",
-  tapToHearHer: "ketik 🔊 untuk dengar dia",
+  tapToHearHer: "ketik pembesar suara untuk dengar dia",
   stepByStep: "langkah demi langkah",
   serves: "untuk",
   tapToHearMeta: "Masak bersama",
@@ -399,6 +423,12 @@ const ms: Copy = {
 };
 
 const ta: Copy = {
+  everythingKept: "அவங்க சொன்ன எல்லாம்",
+  storiesBlurb: "ஒவ்வொரு நினைவும், அதைக் கடக்க ஒவ்வொரு வழியும்.",
+  seeAll: "எல்லாம் பார்",
+  nothingYet: "இங்கே இன்னும் ஒன்றுமில்லை. பாட்டிக்கு ஒரு கால் பண்ணுங்க.",
+  openIt: "திற",
+  ready: "தயார்",
   navHome: "முகப்பு",
   navRecord: "பதிவு",
   navStories: "கதைகள்",
@@ -413,7 +443,7 @@ const ta: Copy = {
   allMemories: "எல்லா நினைவுகளும்",
   recordedToday: "இன்று பதிவு செய்தது",
   makeItALesson: "இதை ஒரு பாடமாக்கு",
-  tapToHearHer: "🔊 தட்டி அவங்க குரலைக் கேளுங்க",
+  tapToHearHer: "ஸ்பீக்கரைத் தட்டி அவங்க குரலைக் கேளுங்க",
   stepByStep: "படிப்படியாக",
   serves: "அளவு",
   tapToHearMeta: "சேர்ந்து சமையுங்க",

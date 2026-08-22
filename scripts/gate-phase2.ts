@@ -153,10 +153,10 @@ async function main() {
     (await page.getByRole("link", { name: /Cook along|Learn her words|Live her decision/ }).count()) >= 2,
     "Format picker offers the shipped formats"
   );
-  // Storybook shipped, so quiz and skill card are what remain unbuilt.
+  // Every format on the picker is one we actually ship — no placeholders.
   check(
-    (await page.getByText(/not yet/).count()) >= 2,
-    "Unbuilt formats shown honestly as greyed-out cards"
+    (await page.getByText(/not yet/).count()) === 0,
+    "The format picker offers only formats that work"
   );
 
   // ---- record page ----

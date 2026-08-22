@@ -73,10 +73,15 @@ async function main() {
   );
   check(tiny.length === 0, `Nothing below 12.5px${tiny.length ? ` (${tiny[0]})` : ""}`);
 
-  // The dark screen is hers, and only hers.
+  // One theme everywhere, Record included — it should not feel like a second app.
   await page.goto(`${BASE}/record`, { waitUntil: "networkidle" });
-  const recordBg = await page.evaluate(() => getComputedStyle(document.querySelector("main")!).backgroundColor);
-  check(recordBg === TOKENS.lacquer, `Record is the one dark screen (${recordBg})`);
+  const recordBg = await page.evaluate(
+    () => getComputedStyle(document.querySelector("main")!).backgroundColor
+  );
+  check(
+    recordBg === "rgba(0, 0, 0, 0)" || recordBg === TOKENS.rice,
+    `Record sits on the same rice ground as the rest of the app (${recordBg})`
+  );
   await page.goto(BASE, { waitUntil: "networkidle" });
 
   const usesDisplayFace = await page.evaluate(() => {

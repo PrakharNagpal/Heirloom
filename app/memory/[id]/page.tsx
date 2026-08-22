@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import Emoji, { type EmojiName } from "@/components/Emoji";
+import Icon from "@/components/Icon";
 import BackLink from "@/components/BackLink";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import TranscriptSpine, { timecode } from "@/components/TranscriptSpine";
@@ -21,13 +23,11 @@ import {
 } from "@/lib/types";
 
 /** Tinted surface per format, so the choices read as a set rather than a list. */
-const FORMAT_STYLE: Record<string, { tint: string; icon: string }> = {
-  cookalong: { tint: "bg-rose-tint", icon: "🥣" },
-  phrasecoach: { tint: "bg-sand", icon: "💬" },
-  storybook: { tint: "bg-jade-tint", icon: "📖" },
-  branching: { tint: "bg-[#eef1f6]", icon: "🔀" },
-  quiz: { tint: "bg-sand", icon: "❔" },
-  skillcard: { tint: "bg-sand", icon: "🪡" },
+const FORMAT_STYLE: Record<string, { tint: string; icon: EmojiName }> = {
+  cookalong: { tint: "bg-rose-tint", icon: "bowl" },
+  phrasecoach: { tint: "bg-sand", icon: "speech" },
+  storybook: { tint: "bg-jade-tint", icon: "book" },
+  branching: { tint: "bg-[#eef1f6]", icon: "shuffle" },
 };
 
 export default function MemoryPage() {
@@ -156,20 +156,6 @@ export default function MemoryPage() {
               reason={memory.suggestedFormats.find((s) => s.format === f)?.reason}
             />
           ))}
-          {(["quiz", "skillcard"] as LessonFormat[]).map((f) => (
-            <div
-              key={f}
-              aria-disabled
-              className="flex items-center gap-3.5 rounded-[18px] border-[1.5px] border-dashed border-line px-4 py-4 text-muted2"
-            >
-              <span aria-hidden className="text-[20px] opacity-50">
-                {FORMAT_STYLE[f].icon}
-              </span>
-              <span className="text-[16.5px]">
-                {FORMAT_NAMES[lang][f]} · {c.notYet}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -206,16 +192,12 @@ function FormatCard({
       href={`/lesson/${memoryId}?format=${format}`}
       className={`flex items-center gap-3.5 rounded-[18px] border-[1.5px] border-line px-4 py-4 ${style.tint}`}
     >
-      <span aria-hidden className="text-[22px]">
-        {style.icon}
-      </span>
+      <Emoji name={style.icon} size={22} />
       <span className="min-w-0 flex-1">
         <span className="block text-[16.5px] font-semibold">{FORMAT_NAMES[lang][format]}</span>
         {reason && <span className="mt-0.5 block truncate text-[14px] text-muted">{reason}</span>}
       </span>
-      <span aria-hidden className="text-[20px] text-muted2">
-        ›
-      </span>
+      <Icon name="chevron" size={18} className="shrink-0 text-muted2" />
     </Link>
   );
 }

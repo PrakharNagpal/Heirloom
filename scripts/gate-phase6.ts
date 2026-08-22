@@ -87,14 +87,23 @@ async function main() {
     `OFFLINE: her voice plays from cache (at ${audio?.t.toFixed(1)}s)`
   );
 
-  // All four languages, with no network to translate with.
-  const rendered = new Set<string>();
-  for (const label of ["English", "中文", "Bahasa Melayu", "தமிழ்"]) {
-    await page.getByRole("button", { name: label, exact: true }).click();
-    await page.waitForTimeout(400);
-    rendered.add(await page.locator("ol li").first().innerText());
+  // All four languages, on BOTH seeded memories, with no network to translate with.
+  for (const id of ["mem_seed", "mem_seed_en"]) {
+    await page.goto(`${BASE}/memory/${id}`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1200);
+    const rendered = new Set<string>();
+    for (const label of ["English", "中文", "Bahasa Melayu", "தமிழ்"]) {
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await page.waitForTimeout(400);
+      rendered.add(await page.locator("ol li").first().innerText());
+    }
+    check(
+      rendered.size === 4,
+      `OFFLINE: ${id} renders all four languages from the bundle (${rendered.size}/4)`
+    );
   }
-  check(rendered.size === 4, `OFFLINE: all four languages render from the bundle (${rendered.size}/4)`);
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.waitForTimeout(300);
 
   // Every lesson, with no network to write one.
   for (const format of ["cookalong", "phrasecoach", "branching", "storybook"]) {
@@ -120,6 +129,15 @@ async function main() {
   await ctx.setOffline(false);
   await page.screenshot({ path: "gate-offline.png", fullPage: true });
   check(errors.length === 0, `No page errors offline${errors.length ? `: ${errors[0].slice(0, 80)}` : ""}`);
+
+  // Both seeded memories, not just the first — a demo that only half works offline
+  // is a demo that fails on the half you happen to open.
+  for (const id of ["mem_seed", "mem_seed_en"]) {
+    await page.goto(`${BASE}/lesson/${id}?format=storybook`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1800);
+    const drawn = await page.locator("ol li img").count();
+    check(drawn === 6, `OFFLINE: ${id}'s picture book shows all six drawings (${drawn})`);
+  }
 
   // ---- what a second device sees ----
   const fresh = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });

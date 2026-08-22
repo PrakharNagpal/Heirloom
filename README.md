@@ -139,6 +139,19 @@ tenth of a second and works with the network off.
 - Heirloom makes **no inference about cognitive state, mood, or health** from her
   speech, and the prompt forbids it explicitly.
 
+## What ships in the box
+
+Two seeded memories, both the kaya story: one told in Mandarin, one in English with
+Singlish cadence, so the demo lands whether or not the room reads Chinese. Each comes
+with its transcript in four languages, sixteen pre-written lessons, and six
+illustrations. Thirty-two lessons and twelve drawings in total, none of which touch
+the model at runtime.
+
+Both are machine-generated recordings, clearly labelled as fixtures in `lib/seed.ts`.
+They prove the pipeline. They prove nothing about dialect, about the uncertainty
+flag, or about how a real grandmother's translations read — the demo needs a real
+person for that.
+
 ## It works with the network off
 
 The seeded memory, her audio, and all twelve of its lessons — three formats in four
@@ -195,6 +208,19 @@ Record or the transcript.
 in italic. The gap prompt is cream with a dashed gold border and a question mark,
 because it is a different kind of thing — a hole we refused to fill, not a note. The
 gate compares their computed styles rather than trusting that they look different.
+
+## Icons
+
+Emoji are shipped as SVG files from Google's Noto Emoji (Apache-2.0, see
+`public/emoji/LICENSE.txt`), never as text characters. A device without a colour
+emoji font renders every emoji as a blank box — an iOS simulator did exactly that to
+this app's entire icon set — and that is not a font you control on a judge's phone.
+
+Two sets, used for different jobs. `Emoji.tsx` is identity and decoration: the
+grandmother on an avatar, the bowl on a cook-along card, the bulb on her aside.
+`Icon.tsx` is monochrome line work for controls that change colour with their state —
+play, pause, chevrons, and the white microphone on the rose record button, because a
+full-colour glyph cannot invert on a coloured ground.
 
 ## Stack
 

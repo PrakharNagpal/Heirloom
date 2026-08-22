@@ -30,8 +30,8 @@ export default function KeptMoment({
         <h1 className="font-[family-name:var(--font-display)] text-[38px] leading-none font-semibold text-gold">
           {c.keptHer}
         </h1>
-        <p className="mt-4 text-[17px] text-rice">{memory.title}</p>
-        <p className="mt-1 text-[14.5px] text-teal-muted">
+        <p className="mt-4 text-[17px]">{memory.title}</p>
+        <p className="mt-1 text-[14.5px] text-muted">
           {memory.speakerName} · {memory.sourceLanguage} · {Math.round(memory.durationSec)}s
         </p>
       </div>

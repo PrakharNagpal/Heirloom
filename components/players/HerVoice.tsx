@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "@/components/Icon";
 import { t } from "@/lib/ui-strings";
 import type { Lang } from "@/lib/types";
 
@@ -34,7 +35,7 @@ export default function HerVoice({
           playing ? "bg-kueh text-white" : "bg-sand text-lacquer"
         }`}
       >
-        <span aria-hidden>{playing ? "❚❚" : "🔊"}</span>
+        <Icon name={playing ? "pause" : "speaker"} size={17} />
         {label}
       </button>
     );
@@ -44,11 +45,11 @@ export default function HerVoice({
       onClick={onPlay}
       aria-label={`Hear ${speaker} say this`}
       title={label}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[16px] transition ${
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
         playing ? "bg-kueh text-white" : "bg-lacquer text-rice"
       }`}
     >
-      <span aria-hidden>{playing ? "❚❚" : "🔊"}</span>
+      <Icon name={playing ? "pause" : "speaker"} size={17} />
     </button>
   );
 }

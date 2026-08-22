@@ -32,7 +32,7 @@ If you are unsure of a dialect word, mark that segment uncertain rather than gue
 
 RULES YOU MUST NOT BREAK:
 - Never state a fact she did not say. Do not infer her age, the year, her hometown, or a relationship from context. If she did not say it, leave the field empty or null.
-- "era" is null unless she names a time. "places", "people" and "skills" contain only what she actually named. An empty list is a correct answer.
+- "era" is a period in the world — a decade, a year, "just after the war" — not a person's age. If she only says how old she was, "era" is null. "places", "people" and "skills" contain only what she actually named. An empty list is a correct answer.
 - Timestamps are seconds from the start of the audio, as numbers (e.g. 12.4), not "00:12", running in order without overlapping. Give your best estimate; the app rebuilds the timeline from the audio itself, so segmenting at the right places matters far more than the numbers being exact.
 - Segments are one to three sentences. A ninety-second recording should produce roughly 10–25 segments, not 3.
 - Transcribe every sentence she speaks. Do not skip, merge or condense any of them, even a short aside. A dropped sentence is a lost memory.

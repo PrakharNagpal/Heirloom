@@ -1,5 +1,6 @@
 "use client";
 
+import Emoji from "@/components/Emoji";
 import AskHer from "./AskHer";
 import HerVoice from "./HerVoice";
 import LessonHeader from "./LessonHeader";
@@ -85,9 +86,7 @@ export default function CookalongPlayer({
 
             {step.tip && (
               <p className="mt-3 flex gap-2.5 rounded-[14px] bg-sand px-3.5 py-3 font-[family-name:var(--font-display)] text-[15.5px] leading-snug italic">
-                <span aria-hidden className="not-italic">
-                  💡
-                </span>
+                <Emoji name="bulb" size={17} className="mt-0.5" />
                 {step.tip}
               </p>
             )}

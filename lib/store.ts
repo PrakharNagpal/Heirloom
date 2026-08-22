@@ -1,7 +1,8 @@
 "use client";
 
 import type { Lang, Lesson, LessonFormat, Memory } from "./types";
-import { SEED_LESSONS, SEED_MEMORY } from "./seed";
+import { SEED_LESSONS, SEED_MEMORIES } from "./seed";
+import { AUDIO_STORE as DB_STORE, openDb } from "./idb";
 
 /**
  * Two stores, deliberately.
@@ -16,8 +17,6 @@ import { SEED_LESSONS, SEED_MEMORY } from "./seed";
 const INDEX_KEY = "heirloom.memories.v1";
 const LESSON_KEY = "heirloom.lessons.v1";
 const LANG_KEY = "heirloom.lang.v1";
-const DB_NAME = "heirloom";
-const DB_STORE = "audio";
 
 export type StoredMemory = {
   memory: Memory;
@@ -48,11 +47,22 @@ function writeIndex(items: StoredMemory[]) {
   }
 }
 
-/** Newest first, with the seeded memory always available at the end. */
+/**
+ * Newest first, always — sorted by when the memory was made, not by whether it was
+ * recorded on this device or shipped with the app. Anything she records today goes
+ * straight to the top of the list.
+ */
 export function listMemories(): StoredMemory[] {
   const saved = readIndex();
-  const hasSeed = saved.some((m) => m.memory.id === SEED_MEMORY.memory.id);
-  return hasSeed ? saved : [...saved, SEED_MEMORY];
+  const seen = new Set(saved.map((m) => m.memory.id));
+  const all = [...saved, ...SEED_MEMORIES.filter((m) => !seen.has(m.memory.id))];
+  return all.sort((a, b) => when(b.memory.createdAt) - when(a.memory.createdAt));
+}
+
+/** An unparseable or missing date sorts oldest rather than throwing the list about. */
+function when(createdAt: string | undefined): number {
+  const t = Date.parse(createdAt ?? "");
+  return Number.isNaN(t) ? 0 : t;
 }
 
 export function getMemory(id: string): StoredMemory | null {
@@ -88,17 +98,6 @@ export async function deleteMemory(id: string) {
 }
 
 // ---- the audio (IndexedDB) -------------------------------------------------
-
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      if (!req.result.objectStoreNames.contains(DB_STORE)) req.result.createObjectStore(DB_STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
 
 async function putAudio(id: string, blob: Blob) {
   const db = await openDb();
@@ -199,16 +198,20 @@ export function saveLesson(lesson: Lesson) {
   }
 }
 
+/** Which formats are already written for a memory, so opening one costs nothing. */
+export function readyFormats(memoryId: string): LessonFormat[] {
+  const formats = new Set<LessonFormat>();
+  for (const l of SEED_LESSONS) if (l.memoryId === memoryId) formats.add(l.format);
+  for (const k of Object.keys(readLessons())) {
+    const [id, format] = k.split("::");
+    if (id === memoryId) formats.add(format as LessonFormat);
+  }
+  return [...formats];
+}
+
 /** How many lessons are ready to open for a memory, without waiting for anything. */
 export function SEED_LESSON_COUNT(memoryId: string): number {
-  const langs = new Set<string>();
-  for (const l of SEED_LESSONS) if (l.memoryId === memoryId) langs.add(l.format);
-  const stored = readLessons();
-  for (const k of Object.keys(stored)) {
-    const [id, format] = k.split("::");
-    if (id === memoryId) langs.add(format);
-  }
-  return langs.size;
+  return readyFormats(memoryId).length;
 }
 
 // ---- language preference ---------------------------------------------------

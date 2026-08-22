@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
+import Emoji from "@/components/Emoji";
+import Icon from "@/components/Icon";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { listMemories, SEED_LESSON_COUNT, type StoredMemory } from "@/lib/store";
 import { useLang } from "@/lib/use-lang";
 import { t } from "@/lib/ui-strings";
 import { LANGUAGES } from "@/lib/types";
+
+/** Home is the front door, not the library — the Stories tab has everything. */
+const RECENT = 3;
 
 export default function Home() {
   const [memories, setMemories] = useState<StoredMemory[] | null>(null);
@@ -31,7 +36,7 @@ export default function Home() {
             {c.familyStories}
           </h1>
         </div>
-        <Avatar seed={speaker} emoji="🧑" />
+        <Avatar seed={speaker} />
       </header>
 
       <div className="mt-5">
@@ -61,9 +66,9 @@ export default function Home() {
       >
         <span
           aria-hidden
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rice text-[20px]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rice"
         >
-          🎙️
+          <Emoji name="mic" size={22} />
         </span>
         <span className="min-w-0">
           <span className="block text-[18px] leading-tight font-bold text-white">
@@ -73,16 +78,24 @@ export default function Home() {
         </span>
       </Link>
 
+      {/* Home shows the last few; the Stories tab is the whole library. */}
       <section className="mt-8">
-        <h2 className="font-[family-name:var(--font-display)] text-[19px] font-semibold">
-          {c.savedMemories}
-        </h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-[family-name:var(--font-display)] text-[19px] font-semibold">
+            {c.savedMemories}
+          </h2>
+          {(memories?.length ?? 0) > RECENT && (
+            <Link href="/stories" className="text-[14.5px] font-medium text-kueh">
+              {c.seeAll}
+            </Link>
+          )}
+        </div>
 
         {memories === null ? null : memories.length === 0 ? (
           <p className="mt-4 text-muted">{c.empty}</p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {memories.map(({ memory }) => (
+            {memories.slice(0, RECENT).map(({ memory }) => (
               <li key={memory.id}>
                 <Link
                   href={`/memory/${memory.id}`}
@@ -97,9 +110,7 @@ export default function Home() {
                       {SEED_LESSON_COUNT(memory.id)} {c.lessonsReady}
                     </span>
                   </span>
-                  <span aria-hidden className="text-[20px] text-muted2">
-                    ›
-                  </span>
+                  <Icon name="chevron" size={18} className="shrink-0 text-muted2" />
                 </Link>
               </li>
             ))}

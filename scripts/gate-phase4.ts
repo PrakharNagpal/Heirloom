@@ -187,6 +187,36 @@ async function main() {
     "The tab bar is hidden on Record, which is full-screen and hers"
   );
 
+  // Home is the front door; Stories is the library. They must not be the same page.
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(500);
+  const homeText = await page.locator("main").innerText();
+  await page.goto(`${BASE}/stories`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(500);
+  const storiesText = await page.locator("main").innerText();
+  check(homeText !== storiesText, "Home and Stories show different things");
+
+  // Newest first, by when the memory was made — not by where it happens to be stored.
+  const order: string[] = await page.evaluate(
+    `Array.from(document.querySelectorAll('a[href^="/memory/"]')).map((a) => a.getAttribute("href"))`
+  );
+  check(
+    order[0] === "/memory/mem_seed_en",
+    `Newest memory is at the top of the list (${order[0]})`
+  );
+  check(
+    (await page.getByRole("link", { name: /Cook along with her/i }).count()) > 0,
+    "Stories offers every lesson directly, without going via the transcript"
+  );
+  check(
+    (await page.getByRole("link", { name: /Record a new memory/i }).count()) === 0,
+    "Stories is a library, not a second copy of the home screen"
+  );
+  check(
+    (await page.getByRole("link", { name: /Stories/ }).getAttribute("aria-current")) === "page",
+    "The Stories tab marks itself active"
+  );
+
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
   const small = await page.evaluate(`(() => {
     const bad = [];
