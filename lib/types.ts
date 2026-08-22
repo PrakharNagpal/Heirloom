@@ -70,11 +70,21 @@ export type Lesson = {
 
 // ---- Lesson payload shapes (Phase 3/4 build against these) ----
 
+/** A detail she never gave, rendered as a question instead of a guess. */
+export type Gap = string | null;
+
 export type CookalongPayload = {
   dish: string;
   servings: string;
   ingredients: string[];
-  steps: { n: number; instruction: string; tip: string | null; segmentIndex: number }[];
+  steps: {
+    n: number;
+    instruction: string;
+    tip: string | null;
+    askHer: Gap;
+    segmentIndex: number;
+  }[];
+  openQuestions: string[];
 };
 
 export type BranchingPayload = {
@@ -86,6 +96,7 @@ export type BranchingPayload = {
     choices: { label: string; nextId: string }[];
   }[];
   trueEndingId: string;
+  openQuestions: string[];
 };
 
 export type PhraseCoachPayload = {
@@ -94,8 +105,10 @@ export type PhraseCoachPayload = {
     romanisation: string;
     meaning: string;
     whenToUse: string;
+    askHer: Gap;
     segmentIndex: number;
   }[];
+  openQuestions: string[];
 };
 
 export const FORMAT_LABELS: Record<LessonFormat, string> = {

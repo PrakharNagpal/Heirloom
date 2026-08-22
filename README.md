@@ -79,6 +79,30 @@ language per memory, then stored. Switching back and forth after that spends not
 Translating into four languages up front was most of the output tokens on the audio
 call, and three quarters of it was never read.
 
+## One recording, several lessons
+
+`/api/generate` writes a lesson against a fixed schema — cook-along, branching story,
+or phrase coach — in whichever language the grandchild is reading. Two rules do the
+real work:
+
+**Every element carries a `segmentIndex`.** That is how her voice gets inside the
+lesson: tap a step and hear her say the sentence it came from. An index that is
+missing or out of range means silence when someone taps, which looks worse than a
+missing feature — so it is a hard validation failure, retried with the reason, and
+backstopped by a fallback lesson built straight from her segments where every index
+is correct by construction. Verified: the fallback renders for all three formats
+when the model is unreachable.
+
+**Nothing is invented.** Where the memory lacks the detail a step needs, the step
+becomes a question. Given a deliberately vague recording that mentions soaking beans
+but never says for how long, it produced:
+
+> *"Soak the beans before cooking, but ask Ah Ma how long to soak them and what kind
+> of beans she used."*
+
+and no quantity, time or temperature anywhere in the lesson. That gap is the feature:
+the app's job is not to replace the conversation, it is to start one.
+
 ## Safety
 
 - **No invented memories.** Where a lesson needs a detail she didn't give, it renders
