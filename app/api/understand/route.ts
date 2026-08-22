@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { callWithFallback, gemini, UNDERSTAND_MODELS } from "@/lib/gemini";
 import { MEMORY_SCHEMA, UNDERSTAND_PROMPT } from "@/lib/prompts";
 import { validateMemory } from "@/lib/validate";
+import { alignSegments, type Silence } from "@/lib/align";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -28,6 +29,12 @@ export type UnderstandRequest = {
   audioUrl?: string;
   durationSec?: number;
   id?: string;
+  /**
+   * Pauses the browser found in the decoded audio. Optional, but it is what makes
+   * tap-a-line-hear-her real — see lib/align.ts for why the model's own
+   * timestamps cannot be used.
+   */
+  silences?: Silence[];
 };
 
 export async function POST(req: Request) {
@@ -95,12 +102,25 @@ export async function POST(req: Request) {
       const { text, model } = await callWithFallback(UNDERSTAND_MODELS, runOnce(correction));
       const parsed = JSON.parse(text);
       const { memory, issues } = validateMemory(parsed, meta);
+
+      // The model's timestamps are estimates and they drift. Rebuild the timeline.
+      const aligned = alignSegments(memory.segments, {
+        durationSec: meta.durationSec,
+        silences: Array.isArray(body.silences) ? body.silences : undefined,
+      });
+      memory.segments = aligned.segments;
+      if (aligned.method === "model")
+        issues.push(
+          "No audio duration was sent, so the model's own timestamps are being used unaligned. Tapping a line may play the wrong sentence."
+        );
+
       const elapsedMs = Date.now() - startedAt;
       console.log(
-        `[understand] ${model} · ${(elapsedMs / 1000).toFixed(1)}s · ${memory.segments.length} segments · ${issues.length} issues`
+        `[understand] ${model} · ${(elapsedMs / 1000).toFixed(1)}s · ${memory.segments.length} segments · ` +
+          `aligned by ${aligned.method} (max shift ${aligned.maxShiftSec}s) · ${issues.length} issues`
       );
       issues.forEach((i) => console.warn(`[understand] ${i}`));
-      return NextResponse.json({ memory, issues, model, elapsedMs });
+      return NextResponse.json({ memory, issues, model, elapsedMs, alignment: aligned.method, maxShiftSec: aligned.maxShiftSec });
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
       console.warn(`[understand] attempt ${attempt + 1} failed: ${lastError}`);

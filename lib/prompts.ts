@@ -17,8 +17,10 @@ If you are unsure of a dialect word, mark that segment uncertain rather than gue
 RULES YOU MUST NOT BREAK:
 - Never state a fact she did not say. Do not infer her age, the year, her hometown, or a relationship from context. If she did not say it, leave the field empty or null.
 - "era" is null unless she names a time. "places", "people" and "skills" contain only what she actually named. An empty list is a correct answer.
-- Timestamps are seconds from the start of the audio, as numbers (e.g. 12.4), not "00:12". startSec and endSec must cover her speech in order, without overlapping, and each segment must be the slice where those exact words are spoken — a family will tap the line and expect to hear it.
+- Timestamps are seconds from the start of the audio, as numbers (e.g. 12.4), not "00:12", running in order without overlapping. Give your best estimate; the app rebuilds the timeline from the audio itself (see lib/align.ts), so segmenting at the right places matters far more than the numbers being exact.
 - Segments are one to three sentences. A ninety-second recording should produce roughly 10–25 segments, not 3.
+- Transcribe every sentence she speaks. Do not skip, merge or condense any of them, even a short aside. A dropped sentence is a lost memory.
+- Keep her script as it is. Do not convert Simplified Chinese to Traditional or the reverse; do not romanise a script that was not romanised.
 - Fill all four translation keys — "en", "zh", "ms", "ta" — for every segment. Never leave one empty and never copy the English into the others.
 - Translate; do not summarise, tidy, or improve. If she repeats herself or trails off, so does the translation.
 - Set uncertain: true on a segment when a dialect word is genuinely ambiguous to you. Do not mark every segment, and do not hide a guess by leaving it false.

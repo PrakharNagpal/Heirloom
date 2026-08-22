@@ -14,9 +14,11 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { config } from "dotenv";
-import { callWithFallback, gemini, UNDERSTAND_MODELS } from "../lib/gemini";
+import { callWithFallback, credentialMode, gemini, UNDERSTAND_MODELS } from "../lib/gemini";
 import { MEMORY_SCHEMA, UNDERSTAND_PROMPT } from "../lib/prompts";
 import { validateMemory } from "../lib/validate";
+import { alignSegments, detectSilences, type Silence } from "../lib/align";
+import { decodeAiffOrWav } from "./decode-pcm";
 import { LANGUAGES, type Memory } from "../lib/types";
 
 config({ path: ".env.local", quiet: true });
@@ -45,7 +47,7 @@ const MIME_BY_EXT: Record<string, string> = {
 
 async function listModels() {
   const ai = gemini();
-  console.log(C.bold("\nModels this key can call:\n"));
+  console.log(C.bold(`\nModels available via ${credentialMode()}:\n`));
   const seen: string[] = [];
   for await (const m of await ai.models.list()) {
     const name = (m.name ?? "").replace(/^models\//, "");
@@ -62,7 +64,13 @@ function timecode(s: number) {
   return `${m}:${(s - m * 60).toFixed(1).padStart(4, "0")}`;
 }
 
-function report(memory: Memory, issues: string[], model: string, elapsedMs: number) {
+function report(
+  memory: Memory,
+  issues: string[],
+  model: string,
+  elapsedMs: number,
+  alignment: { method: string; maxShiftSec: number }
+) {
   const line = (label: string, value: string) =>
     console.log(`  ${label.padEnd(18)} ${value}`);
 
@@ -99,6 +107,10 @@ function report(memory: Memory, issues: string[], model: string, elapsedMs: numb
   console.log(C.bold("─── Gate ──────────────────────────────────────────────\n"));
   const checks: [boolean, string][] = [];
   checks.push([true, `Valid Memory, parsed and validated (${model})`]);
+  checks.push([
+    alignment.method !== "model",
+    `Timeline rebuilt by ${alignment.method} — the model's own timestamps were off by up to ${alignment.maxShiftSec}s`,
+  ]);
   checks.push([
     memory.segments.length >= 5,
     `${memory.segments.length} segments — a 90s recording should give 10–25`,
@@ -199,7 +211,22 @@ async function main() {
 
   const buf = readFileSync(path);
   const mimeType = MIME_BY_EXT[extname(path).toLowerCase()] ?? "audio/ogg";
-  const durationSec = Number(process.env.DEMO_DURATION_SEC ?? 0);
+
+  // AIFF and WAV are raw PCM, so the script can measure the real duration and the
+  // real pauses itself. Compressed formats can't be decoded here without a codec —
+  // pass DEMO_DURATION_SEC and the browser supplies pauses in Phase 2.
+  const pcm = decodeAiffOrWav(buf);
+  let durationSec = Number(process.env.DEMO_DURATION_SEC ?? 0);
+  let silences: Silence[] | undefined;
+  if (pcm) {
+    durationSec = pcm.durationSec;
+    silences = detectSilences(pcm.channel, pcm.sampleRate);
+    console.log(C.dim(`Decoded locally: ${durationSec.toFixed(1)}s, ${silences.length} pauses found`));
+  } else if (!durationSec) {
+    console.log(
+      C.warn("No DEMO_DURATION_SEC set and this format can't be decoded here — timestamps will not be aligned.")
+    );
+  }
 
   console.log(
     C.dim(
@@ -244,8 +271,11 @@ async function main() {
     durationSec,
   });
 
+  const alignment = alignSegments(memory.segments, { durationSec, silences });
+  memory.segments = alignment.segments;
+
   writeFileSync("understand-output.json", JSON.stringify(memory, null, 2));
-  report(memory, issues, model, elapsedMs);
+  report(memory, issues, model, elapsedMs, alignment);
   console.log(C.dim(`  Full JSON → understand-output.json`));
   writeSpotCheck(memory, path);
   console.log("");

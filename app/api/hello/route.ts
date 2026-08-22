@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { callWithFallback, gemini, GENERATE_MODELS, UNDERSTAND_MODELS } from "@/lib/gemini";
+import { callWithFallback, credentialMode, gemini, GENERATE_MODELS, UNDERSTAND_MODELS } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 
-/** Phase 0 smoke test: proves GEMINI_API_KEY works from a route handler. */
+/** Phase 0 smoke test: proves the credentials work from a route handler. */
 export async function GET() {
   try {
     const ai = gemini();
@@ -17,13 +17,14 @@ export async function GET() {
     );
     return NextResponse.json({
       ok: true,
+      auth: credentialMode(),
       model,
       reply: text.trim(),
       chains: { understand: UNDERSTAND_MODELS, generate: GENERATE_MODELS },
     });
   } catch (err) {
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, auth: credentialMode(), error: err instanceof Error ? err.message : String(err) },
       { status: 500 }
     );
   }
