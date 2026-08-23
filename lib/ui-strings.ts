@@ -60,6 +60,7 @@ type Copy = {
   thinking: string;
   thinkingSub: string;
   micRefused: string;
+  recordingTooBig: string;
   // the one gold moment
   keptHer: string;
   seeWhatSheSaid: string;
@@ -165,6 +166,8 @@ const en: Copy = {
   thinkingSub: "Working out what she said, and what it means. About half a minute.",
   micRefused:
     "We can't reach the microphone. Allow it in your browser, or upload a recording instead.",
+  recordingTooBig:
+    "That recording is too big to send. About two minutes of her is as much as we can take at once — try a shorter one.",
   keptHer: "Kept.",
   seeWhatSheSaid: "See what she said",
   tapToHear: "tap to hear her",
@@ -266,6 +269,7 @@ const zh: Copy = {
   thinking: "正在听她讲。",
   thinkingSub: "在弄清楚她说了什么、是什么意思。大概半分钟。",
   micRefused: "我们连不上麦克风。请在浏览器里允许，或者改成上传录音。",
+  recordingTooBig: "这段录音太大了，传不过去。一次大概只能收两分钟，换一段短一点的吧。",
   keptHer: "收好了。",
   seeWhatSheSaid: "看看她说了什么",
   tapToHear: "点一下听她说",
@@ -369,6 +373,8 @@ const ms: Copy = {
   thinkingSub: "Memahami apa yang dia kata dan apa maksudnya. Lebih kurang setengah minit.",
   micRefused:
     "Kami tidak dapat mencapai mikrofon. Benarkan dalam pelayar anda, atau muat naik rakaman.",
+  recordingTooBig:
+    "Rakaman itu terlalu besar untuk dihantar. Lebih kurang dua minit sahaja yang boleh kami terima sekali gus — cuba yang lebih pendek.",
   keptHer: "Tersimpan.",
   seeWhatSheSaid: "Lihat apa yang dia kata",
   tapToHear: "ketik untuk dengar dia",
@@ -472,6 +478,8 @@ const ta: Copy = {
   thinkingSub: "அவங்க என்ன சொன்னாங்க, அதன் அர்த்தம் என்னன்னு பார்க்கிறோம். அரை நிமிடம்.",
   micRefused:
     "மைக்ரோஃபோனை அணுக முடியல. உலாவியில் அனுமதி கொடுங்க, அல்லது ஒரு பதிவைப் பதிவேற்றுங்க.",
+  recordingTooBig:
+    "இந்தப் பதிவு அனுப்ப முடியாத அளவு பெரிசு. ஒரு தடவைக்கு ரெண்டு நிமிஷம் மட்டும்தான் முடியும் — கொஞ்சம் குறைவா இருக்கிற ஒண்ணைப் பாருங்க.",
   keptHer: "சேமிச்சாச்சு.",
   seeWhatSheSaid: "அவங்க சொன்னதைப் பாருங்க",
   tapToHear: "அவங்க குரலைக் கேட்க தட்டுங்க",

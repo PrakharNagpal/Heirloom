@@ -16,6 +16,18 @@ const BARS = [0.35, 0.6, 0.85, 0.5, 1, 0.7, 0.45, 0.9, 0.65, 1, 0.55, 0.8, 0.4, 
 /** Long enough to be a memory, short enough to stay inside the inline request limit. */
 const MAX_SECONDS = 110;
 
+/**
+ * The real ceiling on an upload, and it is not ours.
+ *
+ * The host rejects a request body over 4.5MB at the edge — before the route runs,
+ * so before any sentence we wrote can be returned. Base64 costs a third on top of
+ * the bytes, which puts the true limit near 3.3MB of audio. A recording she makes
+ * here is capped at MAX_SECONDS and lands well under it; a file the family picks
+ * off the phone is not, and without this check a long one fails as a blank error.
+ * Refuse it here instead, in her language.
+ */
+const MAX_UPLOAD_BYTES = Math.floor((4.5 * 1024 * 1024 * 3) / 4) - 8 * 1024;
+
 export default function Recorder({
   lang,
   onSaved,
@@ -107,6 +119,11 @@ export default function Recorder({
   }, [stage]);
 
   async function understand(blob: Blob) {
+    if (blob.size > MAX_UPLOAD_BYTES) {
+      setStage("error");
+      setError(c.recordingTooBig);
+      return;
+    }
     setStage("thinking");
     setError(null);
     try {
@@ -143,6 +160,7 @@ export default function Recorder({
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (file) await understand(file);
   }
 
